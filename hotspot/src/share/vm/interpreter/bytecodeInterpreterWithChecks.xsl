@@ -23,6 +23,7 @@
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 
 <xsl:template match="processcode">
 <xsl:text>
@@ -33,7 +34,6 @@
 
 </xsl:text>
 
-<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 </xsl:template>
 
 </xsl:stylesheet>
