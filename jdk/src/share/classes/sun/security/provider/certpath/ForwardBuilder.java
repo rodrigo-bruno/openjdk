@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertPathValidatorException;
+import java.security.cert.PKIXReason;
 import java.security.cert.CertStore;
 import java.security.cert.CertStoreException;
 import java.security.cert.PKIXBuilderParameters;
@@ -198,6 +199,11 @@ class ForwardBuilder extends Builder {
         X509CertSelector sel = null;
 
         if (currentState.isInitial()) {
+            if (targetCertConstraints.getBasicConstraints() == -2) {
+                // no need to continue: this means we never can match a CA cert
+                return;
+            }
+
             /* This means a CA is the target, so match on same stuff as
              * getMatchingEECerts
              */
@@ -727,8 +733,9 @@ class ForwardBuilder extends Builder {
                     PKIXExtensions.ExtendedKeyUsage_Id.toString());
 
                 if (!unresCritExts.isEmpty())
-                    throw new CertificateException("Unrecognized critical "
-                        + "extension(s)");
+                    throw new CertPathValidatorException
+                        ("Unrecognized critical extension(s)", null, null, -1,
+                         PKIXReason.UNRECOGNIZED_CRIT_EXT);
             }
         }
 

@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -222,8 +222,6 @@ SUNWprivate_1.1 {
 		Java_java_lang_UNIXProcess_waitForProcessExit;
 		Java_java_lang_UNIXProcess_forkAndExec;
 		Java_java_lang_UNIXProcess_destroyProcess;
-                Java_java_nio_Bits_copyFromByteArray;
-                Java_java_nio_Bits_copyToByteArray;
                 Java_java_nio_Bits_copyFromShortArray;
                 Java_java_nio_Bits_copyToShortArray;
                 Java_java_nio_Bits_copyFromIntArray;

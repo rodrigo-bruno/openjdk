@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -170,7 +170,7 @@ public class QueryNotificationFilter implements NotificationFilter {
     private static final long serialVersionUID = -8408613922660635231L;
 
     private static final ObjectName DEFAULT_NAME =
-            Util.newObjectName(":type=Notification");
+            ObjectName.valueOf(":type=Notification");
     private static final QueryExp trueQuery;
     static {
         ValueExp zero = Query.value(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package com.sun.jmx.mbeanserver;
 
-import static com.sun.jmx.mbeanserver.Util.*;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -263,8 +262,12 @@ public abstract class MBeanSupport<M>
         return resource.getClass().getName();
     }
 
-    public final Object getResource() {
+    public final Object getWrappedObject() {
         return resource;
+    }
+
+    public final ClassLoader getWrappedClassLoader() {
+        return resource.getClass().getClassLoader();
     }
 
     public final Class<?> getMBeanInterface() {

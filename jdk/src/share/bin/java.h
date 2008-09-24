@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,24 +121,20 @@ void CreateExecutionEnvironment(int *_argc,
                                        char jvmpath[],
                                        jint so_jvmpath,
                                        char **original_argv);
+/* Reports an error message to stderr or a window as appropriate. */
+void JLI_ReportErrorMessage(const char * message, ...);
+
+/* Reports a system error message to stderr or a window */
+void JLI_ReportErrorMessageSys(const char * message, ...);
+
+/* Reports an error message only to stderr. */
+void JLI_ReportMessage(const char * message, ...);
 
 /*
- * Report an error message to stderr or a window as appropriate.
- */
-void ReportErrorMessage(const char * message, ...);
-void ReportErrorMessageSys(const char * format, ...);
-
-/*
- * Report an error message only to stderr.
- */
-void ReportMessage(const char * message, ...);
-
-/*
- * Report an exception which terminates the vm to stderr or a window
+ * Reports an exception which terminates the vm to stderr or a window
  * as appropriate.
  */
-void ReportExceptionDescription(JNIEnv * env);
-
+void JLI_ReportExceptionDescription(JNIEnv * env);
 void PrintMachineDependentOptions();
 
 const char *jlong_format_specifier();

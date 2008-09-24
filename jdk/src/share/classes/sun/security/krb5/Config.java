@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -803,7 +803,7 @@ public class Config {
             for (int j = 0; j < line.length(); j++) {
                 if (line.charAt(j) == '=') {
                     int index;
-                    key = line.substring(0, j - 1).trim();
+                    key = line.substring(0, j).trim();
                     if (! exists(key, keyVector)) {
                         keyVector.addElement(key);
                         nameVector = new Vector<String> ();
