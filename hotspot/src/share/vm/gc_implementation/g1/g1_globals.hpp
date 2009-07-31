@@ -34,7 +34,7 @@
   product(intx, G1ConfidencePercent, 50,                                    \
           "Confidence level for MMU/pause predictions")                     \
                                                                             \
-  develop(intx, G1MarkingOverheadPercent, 0,                                   \
+  develop(intx, G1MarkingOverheadPercent, 0,                                \
           "Overhead of concurrent marking")                                 \
                                                                             \
   develop(bool, G1AccountConcurrentOverhead, false,                         \
@@ -47,7 +47,7 @@
   develop(bool, G1Gen, true,                                                \
           "If true, it will enable the generational G1")                    \
                                                                             \
-  develop(intx, G1GCPercent, 10,                                                \
+  develop(intx, G1GCPercent, 10,                                            \
           "The desired percent time spent on GC")                           \
                                                                             \
   develop(intx, G1PolicyVerbose, 0,                                         \
@@ -73,6 +73,12 @@
                                                                             \
   diagnostic(bool, G1SummarizeRSetStats, false,                             \
           "Summarize remembered set processing info")                       \
+                                                                            \
+  diagnostic(intx, G1SummarizeRSetStatsPeriod, 0,                           \
+          "The period (in number of GCs) at which we will generate "        \
+          "update buffer processing info "                                  \
+          "(0 means do not periodically generate this info); "              \
+          "it also requires -XX:+G1SummarizeRSetStats")                     \
                                                                             \
   diagnostic(bool, G1SummarizeZFStats, false,                               \
           "Summarize zero-filling info")                                    \
@@ -167,9 +173,16 @@
   develop(bool, G1DisablePostBarrier, false,                                \
           "Disable generation of post-barrier (i.e., RS barrier)   ")       \
                                                                             \
-  product(intx, G1DirtyCardQueueMax, 30,                                    \
-          "Maximum number of completed RS buffers before mutator threads "  \
-          "start processing them.")                                         \
+  product(intx, G1UpdateBufferSize, 256,                                    \
+          "Size of an update buffer")                                       \
+                                                                            \
+  product(intx, G1UpdateBufferQueueProcessingThreshold, 5,                  \
+          "Number of enqueued update buffers that will "                    \
+          "trigger concurrent processing")                                  \
+                                                                            \
+  product(intx, G1UpdateBufferQueueMaxLength, 30,                           \
+          "Maximum number of enqueued update buffers before mutator "       \
+          "threads start processing new ones instead of enqueueing them")   \
                                                                             \
   develop(intx, G1ConcRSLogCacheSize, 10,                                   \
           "Log base 2 of the length of conc RS hot-card cache.")            \
