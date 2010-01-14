@@ -1204,7 +1204,7 @@ class CommandLineFlags {
   product(bool, UseSerialGC, false,                                         \
           "Use the serial garbage collector")                               \
                                                                             \
-  product(bool, UseG1GC, false,                                             \
+  experimental(bool, UseG1GC, false,                                        \
           "Use the Garbage-First garbage collector")                        \
                                                                             \
   product(bool, UseParallelGC, false,                                       \
@@ -2014,6 +2014,10 @@ class CommandLineFlags {
                                                                             \
   diagnostic(bool, GCParallelVerificationEnabled, true,                     \
           "Enable parallel memory system verification")                     \
+                                                                            \
+  diagnostic(bool, DeferInitialCardMark, false,                             \
+          "When +ReduceInitialCardMarks, explicitly defer any that "        \
+           "may arise from new_pre_store_barrier")                          \
                                                                             \
   diagnostic(bool, VerifyRememberedSets, false,                             \
           "Verify GC remembered sets")                                      \
