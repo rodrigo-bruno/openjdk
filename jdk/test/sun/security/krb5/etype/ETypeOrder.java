@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-/* @test
- * @bug 4802340
- * @summary Testing force(), load() isLoaded() of zero len MBB
- * @run main/othervm ZeroMap
+/*
+ * @test
+ * @bug 6844907
+ * @summary krb5 etype order should be from strong to weak
  */
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-import java.nio.channels.*;
+import sun.security.krb5.internal.crypto.EType;
 
-public class ZeroMap {
+public class ETypeOrder {
     public static void main(String[] args) throws Exception {
-        Random random = new Random();
-        long filesize = random.nextInt(1024*1024);
-        int cut = random.nextInt((int)filesize);
-        File file = new File("Blah");
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        raf.setLength(filesize);
-        FileChannel fc = raf.getChannel();
-        MappedByteBuffer buf1 = fc.map(
-                        FileChannel.MapMode.READ_WRITE, cut, 0);
-        buf1.force();
-        buf1.load();
-        buf1.isLoaded();
-        fc.close();
-        raf.close();
+
+        // File does not exist, so that the system-default one won't be used
+        System.setProperty("java.security.krb5.conf", "no_such_file");
+        int[] etypes = EType.getBuiltInDefaults();
+
+        // Reference order, note that 2 is not implemented in Java
+        int correct[] = { 18, 17, 16, 23, 1, 3, 2 };
+
+        int match = 0;
+        loopi: for (int i=0; i<etypes.length; i++) {
+            for (; match < correct.length; match++) {
+                if (etypes[i] == correct[match]) {
+                    System.out.println("Find " + etypes[i] + " at #" + match);
+                    continue loopi;
+                }
+            }
+            throw new Exception("No match or bad order for " + etypes[i]);
+        }
     }
 }
