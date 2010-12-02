@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,30 +23,30 @@
  * questions.
  */
 
-package com.sun.corba.se.pept.transport;
+package com.sun.corba.se.spi.protocol ;
 
-/**
- * @author Harold Carr
- */
-public interface ConnectionCache
-{
-    public String getCacheType();
+// Introduce more information about WHY we are re-trying a request
+// so we can properly handle the two cases:
+// - BEFORE_RESPONSE means that the retry is caused by
+//   something that happened BEFORE the message was sent: either
+//   an exception from the SocketFactory, or one from the
+//   Client side send_request interceptor point.
+// - AFTER_RESPONSE means that the retry is a result either of the
+//   request sent to the server (from the response), or from the
+//   Client side receive_xxx interceptor point.
+public enum RetryType {
+    NONE( false ),
+    BEFORE_RESPONSE( true ),
+    AFTER_RESPONSE( true ) ;
 
-    public void stampTime(Connection connection);
+    private final boolean isRetry ;
 
-    public long numberOfConnections();
+    RetryType( boolean isRetry ) {
+        this.isRetry = isRetry ;
+    }
 
-    public long numberOfIdleConnections();
+    public boolean isRetry() {
+        return this.isRetry ;
+    }
+} ;
 
-    public long numberOfBusyConnections();
-
-    public boolean reclaim();
-
-    /** Close all connections in the connection cache.
-     * This is used as a final cleanup, and will result
-     * in abrupt termination of any pending communications.
-     */
-    public void close();
-}
-
-// End of file.
