@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,31 +24,26 @@
 
 /**
  * @test
- * @bug 6895383
- * @summary JCK test throws NPE for method compiled with Escape Analysis
- *
- * @run main/othervm -Xcomp Test
+ * @bug 6579789
+ * @summary Internal error "c1_LinearScan.cpp:1429 Error: assert(false,"")" in debuggee with fastdebug VM
+ * @run main/othervm -Xcomp -XX:UseSSE=0 -XX:CompileOnly=Test6579789.bug Test6579789
  */
 
-import java.util.*;
-import java.util.concurrent.*;
-
-public class Test {
-    public static void main(String argv[]) {
-        Test test = new Test();
-        test.testRemove1_IndexOutOfBounds();
-        test.testAddAll1_IndexOutOfBoundsException();
+public class Test6579789 {
+    public static void main(String[] args) {
+        bug(4);
     }
-
-    public void testRemove1_IndexOutOfBounds() {
-        CopyOnWriteArrayList c = new CopyOnWriteArrayList();
-    }
-
-    public void testAddAll1_IndexOutOfBoundsException() {
+    public static void bug(int n) {
+        float f = 1;
+        int i = 1;
         try {
-            CopyOnWriteArrayList c = new CopyOnWriteArrayList();
-            c.addAll(-1, new LinkedList()); // should throw IndexOutOfBoundsException
-        } catch (IndexOutOfBoundsException e) {
+            int x = 1 / n; // instruction that can trap
+            f = 2;
+            i = 2;
+            int y = 2 / n; // instruction that can trap
+        } catch (Exception ex) {
+            f++;
+            i++;
         }
     }
 }

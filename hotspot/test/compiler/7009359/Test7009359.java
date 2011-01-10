@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,31 +24,29 @@
 
 /**
  * @test
- * @bug 6895383
- * @summary JCK test throws NPE for method compiled with Escape Analysis
+ * @bug 7009359
+ * @summary HS with -XX:+AggressiveOpts optimize new StringBuffer(null) so it does not throw NPE as expected
  *
- * @run main/othervm -Xcomp Test
+ * @run main/othervm -Xbatch -XX:+IgnoreUnrecognizedVMOptions -XX:+OptimizeStringConcat -XX:CompileCommand=exclude,Test7009359,main Test7009359
+ *
  */
 
-import java.util.*;
-import java.util.concurrent.*;
-
-public class Test {
-    public static void main(String argv[]) {
-        Test test = new Test();
-        test.testRemove1_IndexOutOfBounds();
-        test.testAddAll1_IndexOutOfBoundsException();
-    }
-
-    public void testRemove1_IndexOutOfBounds() {
-        CopyOnWriteArrayList c = new CopyOnWriteArrayList();
-    }
-
-    public void testAddAll1_IndexOutOfBoundsException() {
-        try {
-            CopyOnWriteArrayList c = new CopyOnWriteArrayList();
-            c.addAll(-1, new LinkedList()); // should throw IndexOutOfBoundsException
-        } catch (IndexOutOfBoundsException e) {
+public class Test7009359 {
+    public static void main (String[] args) {
+        for(int i = 0; i < 1000000; i++) {
+            if(!stringmakerBUG(null).equals("NPE")) {
+                System.out.println("StringBuffer(null) does not throw NPE");
+                System.exit(97);
+            }
         }
     }
+
+    public static String stringmakerBUG(String str) {
+       try {
+           return new StringBuffer(str).toString();
+       } catch (NullPointerException e) {
+           return "NPE";
+       }
+    }
 }
+
