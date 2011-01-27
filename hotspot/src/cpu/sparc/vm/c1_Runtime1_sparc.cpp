@@ -343,9 +343,10 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
   // returned.
 
   restore_live_registers(sasm);
-  __ restore();
-  __ br(Assembler::always, false, Assembler::pt, deopt_blob->unpack_with_reexecution(), relocInfo::runtime_call_type);
-  __ delayed()->nop();
+
+  AddressLiteral dest(deopt_blob->unpack_with_reexecution());
+  __ jump_to(dest, O0);
+  __ delayed()->restore();
 
   __ bind(no_deopt);
   restore_live_registers(sasm);
@@ -709,7 +710,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
     case throw_array_store_exception_id:
       {
         __ set_info("throw_array_store_exception", dont_gc_arguments);
-        oop_maps = generate_exception_throw(sasm, CAST_FROM_FN_PTR(address, throw_array_store_exception), false);
+        oop_maps = generate_exception_throw(sasm, CAST_FROM_FN_PTR(address, throw_array_store_exception), true);
       }
       break;
 
