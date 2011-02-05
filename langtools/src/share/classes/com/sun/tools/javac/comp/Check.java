@@ -68,6 +68,7 @@ public class Check {
     private final boolean skipAnnotations;
     private boolean warnOnSyntheticConflicts;
     private boolean suppressAbortOnBadClassFile;
+    private boolean enableSunApiLintControl;
     private final TreeInfo treeinfo;
 
     // The set of lint options currently in effect. It is initialized
@@ -109,13 +110,13 @@ public class Check {
         skipAnnotations = options.isSet("skipAnnotations");
         warnOnSyntheticConflicts = options.isSet("warnOnSyntheticConflicts");
         suppressAbortOnBadClassFile = options.isSet("suppressAbortOnBadClassFile");
+        enableSunApiLintControl = options.isSet("enableSunApiLintControl");
 
         Target target = Target.instance(context);
         syntheticNameChar = target.syntheticNameChar();
 
         boolean verboseDeprecated = lint.isEnabled(LintCategory.DEPRECATION);
         boolean verboseUnchecked = lint.isEnabled(LintCategory.UNCHECKED);
-        boolean verboseVarargs = lint.isEnabled(LintCategory.VARARGS);
         boolean verboseSunApi = lint.isEnabled(LintCategory.SUNAPI);
         boolean enforceMandatoryWarnings = source.enforceMandatoryWarnings();
 
@@ -123,10 +124,10 @@ public class Check {
                 enforceMandatoryWarnings, "deprecated", LintCategory.DEPRECATION);
         uncheckedHandler = new MandatoryWarningHandler(log, verboseUnchecked,
                 enforceMandatoryWarnings, "unchecked", LintCategory.UNCHECKED);
-        unsafeVarargsHandler = new MandatoryWarningHandler(log, verboseVarargs,
-                enforceMandatoryWarnings, "varargs", LintCategory.VARARGS);
         sunApiHandler = new MandatoryWarningHandler(log, verboseSunApi,
                 enforceMandatoryWarnings, "sunapi", null);
+
+        deferredLintHandler = DeferredLintHandler.immediateHandler;
     }
 
     /** Switch: generics enabled?
@@ -166,13 +167,13 @@ public class Check {
      */
     private MandatoryWarningHandler uncheckedHandler;
 
-    /** A handler for messages about unchecked or unsafe vararg method decl.
-     */
-    private MandatoryWarningHandler unsafeVarargsHandler;
-
     /** A handler for messages about using proprietary API.
      */
     private MandatoryWarningHandler sunApiHandler;
+
+    /** A handler for deferred lint warnings.
+     */
+    private DeferredLintHandler deferredLintHandler;
 
 /* *************************************************************************
  * Errors and Warnings
@@ -181,6 +182,12 @@ public class Check {
     Lint setLint(Lint newLint) {
         Lint prev = lint;
         lint = newLint;
+        return prev;
+    }
+
+    DeferredLintHandler setDeferredLintHandler(DeferredLintHandler newDeferredLintHandler) {
+        DeferredLintHandler prev = deferredLintHandler;
+        deferredLintHandler = newDeferredLintHandler;
         return prev;
     }
 
@@ -800,8 +807,9 @@ public class Check {
                 Type actual = types.subst(args.head,
                     type.tsym.type.getTypeArguments(),
                     tvars_buf.toList());
-                if (!checkExtends(actual, (TypeVar)tvars.head) &&
-                        !tvars.head.getUpperBound().isErroneous()) {
+                if (!isTypeArgErroneous(actual) &&
+                        !tvars.head.getUpperBound().isErroneous() &&
+                        !checkExtends(actual, (TypeVar)tvars.head)) {
                     return args.head;
                 }
                 args = args.tail;
@@ -814,14 +822,39 @@ public class Check {
             for (Type arg : types.capture(type).getTypeArguments()) {
                 if (arg.tag == TYPEVAR &&
                         arg.getUpperBound().isErroneous() &&
-                        !tvars.head.getUpperBound().isErroneous()) {
+                        !tvars.head.getUpperBound().isErroneous() &&
+                        !isTypeArgErroneous(args.head)) {
                     return args.head;
                 }
                 tvars = tvars.tail;
+                args = args.tail;
             }
 
             return null;
         }
+        //where
+        boolean isTypeArgErroneous(Type t) {
+            return isTypeArgErroneous.visit(t);
+        }
+
+        Types.UnaryVisitor<Boolean> isTypeArgErroneous = new Types.UnaryVisitor<Boolean>() {
+            public Boolean visitType(Type t, Void s) {
+                return t.isErroneous();
+            }
+            @Override
+            public Boolean visitTypeVar(TypeVar t, Void s) {
+                return visit(t.getUpperBound());
+            }
+            @Override
+            public Boolean visitCapturedType(CapturedType t, Void s) {
+                return visit(t.getUpperBound()) ||
+                        visit(t.getLowerBound());
+            }
+            @Override
+            public Boolean visitWildcardType(WildcardType t, Void s) {
+                return visit(t.type);
+            }
+        };
 
     /** Check that given modifiers are legal for given symbol and
      *  return modifiers together with any implicit modififiers for that symbol.
@@ -1094,6 +1127,7 @@ public class Check {
                     log.error(tree.pos(), "improperly.formed.type.param.missing");
             }
         }
+
         public void visitSelectInternal(JCFieldAccess tree) {
             if (tree.type.tsym.isStatic() &&
                 tree.selected.type.isParameterized()) {
@@ -1463,11 +1497,8 @@ public class Check {
         }
 
         // Warn if a deprecated method overridden by a non-deprecated one.
-        if ((other.flags() & DEPRECATED) != 0
-            && (m.flags() & DEPRECATED) == 0
-            && m.outermostClass() != other.outermostClass()
-            && !isDeprecatedOverrideIgnorable(other, origin)) {
-            warnDeprecated(TreeInfo.diagnosticPositionFor(m, tree), other);
+        if (!isDeprecatedOverrideIgnorable(other, origin)) {
+            checkDeprecated(TreeInfo.diagnosticPositionFor(m, tree), m, other);
         }
     }
     // where
@@ -2121,7 +2152,7 @@ public class Check {
 
         public boolean accepts(Symbol s) {
             return s.kind == MTH &&
-                    (s.flags() & SYNTHETIC) == 0 &&
+                    (s.flags() & (SYNTHETIC | CLASH)) == 0 &&
                     s.isInheritedIn(site.tsym, types) &&
                     !s.isConstructor();
         }
@@ -2410,6 +2441,32 @@ public class Check {
         }
     }
 
+    void checkDeprecated(final DiagnosticPosition pos, final Symbol other, final Symbol s) {
+        if ((s.flags() & DEPRECATED) != 0 &&
+                (other.flags() & DEPRECATED) == 0 &&
+                s.outermostClass() != other.outermostClass()) {
+            deferredLintHandler.report(new DeferredLintHandler.LintLogger() {
+                @Override
+                public void report() {
+                    warnDeprecated(pos, s);
+                }
+            });
+        };
+    }
+
+    void checkSunAPI(final DiagnosticPosition pos, final Symbol s) {
+        if ((s.flags() & PROPRIETARY) != 0) {
+            deferredLintHandler.report(new DeferredLintHandler.LintLogger() {
+                public void report() {
+                    if (enableSunApiLintControl)
+                      warnSunApi(pos, "sun.proprietary", s);
+                    else
+                      log.strictWarning(pos, "sun.proprietary", s);
+                }
+            });
+        }
+    }
+
 /* *************************************************************************
  * Check for recursive annotation elements.
  **************************************************************************/
@@ -2535,9 +2592,9 @@ public class Check {
                        Type right) {
         if (operator.opcode == ByteCodes.error) {
             log.error(pos,
-                      "operator.cant.be.applied",
+                      "operator.cant.be.applied.1",
                       treeinfo.operatorName(tag),
-                      List.of(left, right));
+                      left, right);
         }
         return operator.opcode;
     }
@@ -2581,28 +2638,42 @@ public class Check {
         if (sym.owner.name == names.any) return false;
         for (Scope.Entry e = s.lookup(sym.name); e.scope == s; e = e.next()) {
             if (sym != e.sym &&
+                (e.sym.flags() & CLASH) == 0 &&
                 sym.kind == e.sym.kind &&
                 sym.name != names.error &&
                 (sym.kind != MTH || types.hasSameArgs(types.erasure(sym.type), types.erasure(e.sym.type)))) {
-                if ((sym.flags() & VARARGS) != (e.sym.flags() & VARARGS))
+                if ((sym.flags() & VARARGS) != (e.sym.flags() & VARARGS)) {
                     varargsDuplicateError(pos, sym, e.sym);
-                else if (sym.kind == MTH && !types.overrideEquivalent(sym.type, e.sym.type))
+                    return true;
+                } else if (sym.kind == MTH && !hasSameSignature(sym.type, e.sym.type)) {
                     duplicateErasureError(pos, sym, e.sym);
-                else
+                    sym.flags_field |= CLASH;
+                    return true;
+                } else {
                     duplicateError(pos, e.sym);
-                return false;
+                    return false;
+                }
             }
         }
         return true;
     }
     //where
-    /** Report duplicate declaration error.
-     */
-    void duplicateErasureError(DiagnosticPosition pos, Symbol sym1, Symbol sym2) {
-        if (!sym1.type.isErroneous() && !sym2.type.isErroneous()) {
-            log.error(pos, "name.clash.same.erasure", sym1, sym2);
+        boolean hasSameSignature(Type mt1, Type mt2) {
+            if (mt1.tag == FORALL && mt2.tag == FORALL) {
+                ForAll fa1 = (ForAll)mt1;
+                ForAll fa2 = (ForAll)mt2;
+                mt2 = types.subst(fa2, fa2.tvars, fa1.tvars);
+            }
+            return types.hasSameArgs(mt1.asMethodType(), mt2.asMethodType());
         }
-    }
+
+        /** Report duplicate declaration error.
+         */
+        void duplicateErasureError(DiagnosticPosition pos, Symbol sym1, Symbol sym2) {
+            if (!sym1.type.isErroneous() && !sym2.type.isErroneous()) {
+                log.error(pos, "name.clash.same.erasure", sym1, sym2);
+            }
+        }
 
     /** Check that single-type import is not already imported or top-level defined,
      *  but make an exception for two single-type imports which denote the same type.

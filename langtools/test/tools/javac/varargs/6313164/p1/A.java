@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,23 +21,8 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6911256 6964740 6965277
- * @author Maurizio Cimadamore
- * @summary Verify that method type-inference works as expected in TWR context
- * @compile TwrInference.java
- */
+package p1;
 
-class TwrInference {
-
-    public void test() {
-        try(getX()) {
-            //do something
-        } catch (Exception e) { // Not reachable
-            throw new AssertionError("Shouldn't reach here", e);
-        }
-    }
-
-    <X> X getX() { return null; }
+class A {
+    A() { }
 }
