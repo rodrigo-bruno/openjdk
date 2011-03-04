@@ -2664,25 +2664,6 @@ class CommandLineFlags {
   product(bool, UseStringCache, false,                                      \
           "Enable String cache capabilities on String.java")                \
                                                                             \
-  /* byte strings */                                                        \
-  product(bool, UseCompressedStrings, false,                                \
-          "Enable byte-valued strings")                                     \
-                                                                            \
-  product(bool, SpecialStringCompress, true,                                \
-          "special version of string compress")                             \
-                                                                            \
-  product(bool, SpecialStringInflate, true,                                 \
-          "special version of string inflate")                              \
-                                                                            \
-  product(bool, SpecialStringCompareToCC, true,                             \
-          "special version of string compareToCC")                          \
-                                                                            \
-  product(bool, SpecialStringIndexOfCC, true,                               \
-          "special version of string indexOfCC")                            \
-                                                                            \
-  product(bool, SpecialStringEqualsCC, true,                                \
-          "special version of string equalsCC")                             \
-                                                                            \
   /* statistics */                                                          \
   develop(bool, CountCompiledCalls, false,                                  \
           "counts method invocations")                                      \
@@ -3748,6 +3729,9 @@ class CommandLineFlags {
   diagnostic(ccstr, PauseAtStartupFile, NULL,                               \
           "The file to create and for whose removal to await when pausing " \
           "at startup. (default: ./vm.paused.<pid>)")                       \
+                                                                            \
+  diagnostic(bool, PauseAtExit, false,                                      \
+          "Pause and wait for keypress on exit if a debugger is attached")  \
                                                                             \
   product(bool, ExtendedDTraceProbes,    false,                             \
           "Enable performance-impacting dtrace probes")                     \
