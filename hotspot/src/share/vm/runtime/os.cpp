@@ -1310,7 +1310,7 @@ int os::get_line_chars(int fd, char* buf, const size_t bsize){
   size_t sz, i = 0;
 
   // read until EOF, EOL or buf is full
-  while ((sz = (int) read(fd, &buf[i], 1)) == 1 && i < (bsize-1) && buf[i] != '\n') {
+  while ((sz = (int) read(fd, &buf[i], 1)) == 1 && i < (bsize-2) && buf[i] != '\n') {
      ++i;
   }
 
@@ -1331,7 +1331,7 @@ int os::get_line_chars(int fd, char* buf, const size_t bsize){
   }
 
   // line is longer than size of buf, skip to EOL
-  int ch;
+  char ch;
   while (read(fd, &ch, 1) == 1 && ch != '\n') {
     // Do nothing
   }
