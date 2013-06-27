@@ -26,6 +26,7 @@ package java.lang;
 
 import java.io.*;
 import java.lang.reflect.Executable;
+import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
 import java.util.StringTokenizer;
@@ -634,6 +635,8 @@ public final class System {
      *
      * <p>On UNIX systems, it returns {@code "\n"}; on Microsoft
      * Windows systems it returns {@code "\r\n"}.
+     *
+     * @return the system-dependent line separator string
      * @since 1.7
      */
     public static String lineSeparator() {
@@ -1248,6 +1251,9 @@ public final class System {
             }
             public String newStringUnsafe(char[] chars) {
                 return new String(chars, true);
+            }
+            public Thread newThreadWithAcc(Runnable target, AccessControlContext acc) {
+                return new Thread(target, acc);
             }
         });
     }
