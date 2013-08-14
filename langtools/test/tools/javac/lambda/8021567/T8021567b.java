@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,25 @@
  * questions.
  */
 
-package p;
+/*
+ * @test
+ * @bug 8021567
+ * @summary Javac doesn't report "java: reference to method is ambiguous" any more
+ */
 
-public class E1 {
-    public static class A { }
+public class T8021567b {
+
+    interface SAM {
+        int m();
+    }
+
+    public static void main(String argv[]) {
+        test();
+    }
+
+    static boolean test() {
+        final int i = 0;
+        SAM s = () -> i;
+        return (s.m() == 0);
+    }
 }
