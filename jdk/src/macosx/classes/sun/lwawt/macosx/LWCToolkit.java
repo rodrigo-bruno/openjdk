@@ -207,9 +207,9 @@ public final class LWCToolkit extends LWToolkit {
 
     @Override
     public MenuBarPeer createMenuBar(MenuBar target) {
-         MenuBarPeer peer = new CMenuBar(target);
-         targetCreatedPeer(target, peer);
-             return peer;
+        MenuBarPeer peer = new CMenuBar(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     @Override
@@ -300,11 +300,6 @@ public final class LWCToolkit extends LWToolkit {
     }
     public FontPeer getFontPeer(String name, int style) {
         return new OSXPlatformFont(name, style);
-    }
-
-    @Override
-    protected MouseInfoPeer createMouseInfoPeerImpl() {
-        return new CMouseInfoPeer();
     }
 
     @Override
