@@ -43,6 +43,16 @@ AC_DEFUN([ADD_JVM_ARG_IF_OK],
     fi
 ])
 
+# Appends a string to a path variable, only adding the : when needed.
+AC_DEFUN([BASIC_APPEND_TO_PATH],
+[
+  if test "x[$]$1" = x; then
+    $1="$2"
+  else
+    $1="[$]$1:$2"
+  fi
+])
+
 # This will make sure the given variable points to a full and proper
 # path. This means:
 # 1) There will be no spaces in the path. On posix platforms,
@@ -191,6 +201,15 @@ AC_DEFUN([BASIC_REMOVE_SYMBOLIC_LINKS],
             $1=$sym_link_dir/$sym_link_file
         fi
     fi
+])
+
+# Register a --with argument but mark it as deprecated
+# $1: The name of the with argument to deprecate, not including --with-
+AC_DEFUN([BASIC_DEPRECATED_ARG_WITH],
+[
+  AC_ARG_WITH($1, [AS_HELP_STRING([--with-$1],
+      [Deprecated. Option is kept for backwards compatibility and is ignored])],
+      [AC_MSG_WARN([Option --with-$1 is deprecated and will be ignored.])])
 ])
 
 AC_DEFUN_ONCE([BASIC_INIT],
@@ -351,7 +370,9 @@ fi
 AC_SUBST(SYS_ROOT)
 
 AC_ARG_WITH([tools-dir], [AS_HELP_STRING([--with-tools-dir],
-  [search this directory for compilers and tools (for cross-compiling)])], [TOOLS_DIR=$with_tools_dir])
+  [search this directory for compilers and tools (for cross-compiling)])], 
+  [TOOLS_DIR=$with_tools_dir]
+)
 
 AC_ARG_WITH([devkit], [AS_HELP_STRING([--with-devkit],
   [use this directory as base for tools-dir and sys-root (for cross-compiling)])],
@@ -359,13 +380,14 @@ AC_ARG_WITH([devkit], [AS_HELP_STRING([--with-devkit],
     if test "x$with_sys_root" != x; then
       AC_MSG_ERROR([Cannot specify both --with-devkit and --with-sys-root at the same time])
     fi
-    if test "x$with_tools_dir" != x; then
-      AC_MSG_ERROR([Cannot specify both --with-devkit and --with-tools-dir at the same time])
+    BASIC_FIXUP_PATH([with_devkit])
+    BASIC_APPEND_TO_PATH([TOOLS_DIR],$with_devkit/bin)
+    if test -d "$with_devkit/$host_alias/libc"; then
+      SYS_ROOT=$with_devkit/$host_alias/libc
+    elif test -d "$with_devkit/$host/sys-root"; then
+      SYS_ROOT=$with_devkit/$host/sys-root
     fi
-    TOOLS_DIR=$with_devkit/bin
-    SYS_ROOT=$with_devkit/$host_alias/libc
   ])
-
 ])
 
 AC_DEFUN_ONCE([BASIC_SETUP_OUTPUT_DIR],
@@ -608,6 +630,14 @@ AC_PATH_PROGS(READELF, [readelf greadelf])
 AC_PATH_PROG(HG, hg)
 AC_PATH_PROG(STAT, stat)
 AC_PATH_PROG(TIME, time)
+# Check if it's GNU time
+IS_GNU_TIME=`$TIME --version 2>&1 | $GREP 'GNU time'`
+if test "x$IS_GNU_TIME" != x; then
+  IS_GNU_TIME=yes
+else
+  IS_GNU_TIME=no
+fi
+AC_SUBST(IS_GNU_TIME)
 
 if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
   BASIC_REQUIRE_PROG(COMM, comm)

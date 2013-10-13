@@ -123,11 +123,17 @@ if test "x$SYS_ROOT" != "x/"; then
   if test "x$x_includes" = xNONE; then
     if test -f "$SYS_ROOT/usr/X11R6/include/X11/Xlib.h"; then
       x_includes="$SYS_ROOT/usr/X11R6/include"
+    elif test -f "$SYS_ROOT/usr/include/X11/Xlib.h"; then
+      x_includes="$SYS_ROOT/usr/include"
     fi
   fi
   if test "x$x_libraries" = xNONE; then
     if test -f "$SYS_ROOT/usr/X11R6/lib/libX11.so"; then
       x_libraries="$SYS_ROOT/usr/X11R6/lib"
+    elif test "$SYS_ROOT/usr/lib64/libX11.so" && test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+      x_libraries="$SYS_ROOT/usr/lib64"
+    elif test -f "$SYS_ROOT/usr/lib/libX11.so"; then
+      x_libraries="$SYS_ROOT/usr/lib"
     fi
   fi
 fi
@@ -153,8 +159,7 @@ fi
 if test "x$OPENJDK_TARGET_OS" = xlinux; then
     if test -d "$SYS_ROOT/usr/X11R6"; then
         OPENWIN_HOME="$SYS_ROOT/usr/X11R6"
-    fi
-    if test -d "$SYS_ROOT/usr/include/X11"; then
+    elif test -d "$SYS_ROOT/usr/include/X11"; then
         OPENWIN_HOME="$SYS_ROOT/usr"
     fi
 fi
@@ -180,7 +185,7 @@ OLD_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $X_CFLAGS"
 
 # Need to include Xlib.h and Xutil.h to avoid "present but cannot be compiled" warnings on Solaris 10
-AC_CHECK_HEADERS([X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h],
+AC_CHECK_HEADERS([X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h X11/Intrinsic.h],
                  [X11_A_OK=yes],
                  [X11_A_OK=no; break],
                  [ # include <X11/Xlib.h>
@@ -192,7 +197,7 @@ AC_LANG_POP(C)
 
 if test "x$X11_A_OK" = xno && test "x$X11_NOT_NEEDED" != xyes; then 
     HELP_MSG_MISSING_DEPENDENCY([x11])
-    AC_MSG_ERROR([Could not find all X11 headers (shape.h Xrender.h XTest.h). $HELP_MSG])
+    AC_MSG_ERROR([Could not find all X11 headers (shape.h Xrender.h XTest.h Intrinsic.h). $HELP_MSG])
 fi
 
 AC_SUBST(X_CFLAGS)
@@ -359,12 +364,12 @@ else
 	if test "x$FREETYPE2_FOUND" = xno; then
 	    AC_MSG_CHECKING([for freetype in some standard locations])
 	
-	    if test -s /usr/X11/include/ft2build.h && test -d /usr/X11/include/freetype2/freetype; then
-	        DEFAULT_FREETYPE_CFLAGS="-I/usr/X11/include/freetype2 -I/usr/X11/include"
-	        DEFAULT_FREETYPE_LIBS="-L/usr/X11/lib -lfreetype"
+	    if test -s $SYS_ROOT/usr/X11/include/ft2build.h && test -d $SYS_ROOT/usr/X11/include/freetype2/freetype; then
+	        DEFAULT_FREETYPE_CFLAGS="-I$SYS_ROOT/usr/X11/include/freetype2 -I$SYS_ROOT/usr/X11/include"
+	        DEFAULT_FREETYPE_LIBS="-L$SYS_ROOT/usr/X11/lib -lfreetype"
 	    fi
-	    if test -s /usr/include/ft2build.h && test -d /usr/include/freetype2/freetype; then
-	        DEFAULT_FREETYPE_CFLAGS="-I/usr/include/freetype2"
+	    if test -s $SYS_ROOT/usr/include/ft2build.h && test -d $SYS_ROOT/usr/include/freetype2/freetype; then
+	        DEFAULT_FREETYPE_CFLAGS="-I$SYS_ROOT/usr/include/freetype2"
 	        DEFAULT_FREETYPE_LIBS="-lfreetype"
 	    fi
 	
