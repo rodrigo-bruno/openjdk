@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -235,7 +235,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
         if (printServices == null) {
             return new PrintService[0];
         } else {
-            return (PrintService[])printServices.clone();
+            return printServices.clone();
         }
     }
 
@@ -248,13 +248,13 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
             // information when queried using IPP. Workaround is to remove it.
             // Even CUPS ignores these entries as shown in lpstat or using
             // their web configuration.
-            PrinterURI uri = (PrinterURI)ps.getAttribute(PrinterURI.class);
+            PrinterURI uri = ps.getAttribute(PrinterURI.class);
             if (uri.getURI().getHost().equals("localhost")) {
                 IPPPrintService.debug_println(debugPrefix+"duplicate PrintService, ignoring the new local printer: "+ps);
                 return index;  // Do not add this.
             }
             PrintService oldPS = (PrintService)(printerList.get(index));
-            uri = (PrinterURI)oldPS.getAttribute(PrinterURI.class);
+            uri = oldPS.getAttribute(PrinterURI.class);
             if (uri.getURI().getHost().equals("localhost")) {
                 IPPPrintService.debug_println(debugPrefix+"duplicate PrintService, removing existing local printer: "+oldPS);
                 printerList.remove(oldPS);
@@ -447,8 +447,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
         /* check if all printers are already available */
         if (printServices != null) {
             for (PrintService printService : printServices) {
-                PrinterName printerName =
-                    (PrinterName)printService.getAttribute(PrinterName.class);
+                PrinterName printerName = printService.getAttribute(PrinterName.class);
                 if (printerName.getValue().equals(name)) {
                     return printService;
                 }
@@ -503,8 +502,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
              * initialised.
              */
 
-            PrinterName defName =
-                (PrinterName)defService.getAttribute(PrinterName.class);
+            PrinterName defName = defService.getAttribute(PrinterName.class);
 
             if (defName != null && name.equals(defName)) {
                 if (matchesAttributes(defService, serviceSet)) {
@@ -850,7 +848,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
         for ( int i=0; i < names.length; i++) {
             printerNames.add(names[i]);
         }
-        return (String[])printerNames.toArray(new String[printerNames.size()]);
+        return printerNames.toArray(new String[printerNames.size()]);
     }
 
     static String[] execCmd(final String command) {

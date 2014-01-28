@@ -179,14 +179,14 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
 }
 
 JNIEXPORT void JNICALL
-Java_sun_management_OperatingSystemImpl_initialize
+Java_sun_management_OperatingSystemImpl_initialize0
   (JNIEnv *env, jclass cls)
 {
     page_size = sysconf(_SC_PAGESIZE);
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getCommittedVirtualMemorySize
+Java_sun_management_OperatingSystemImpl_getCommittedVirtualMemorySize0
   (JNIEnv *env, jobject mbean)
 {
 #ifdef __solaris__
@@ -253,21 +253,21 @@ Java_sun_management_OperatingSystemImpl_getCommittedVirtualMemorySize
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getTotalSwapSpaceSize
+Java_sun_management_OperatingSystemImpl_getTotalSwapSpaceSize0
   (JNIEnv *env, jobject mbean)
 {
     return get_total_or_available_swap_space_size(env, JNI_FALSE);
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getFreeSwapSpaceSize
+Java_sun_management_OperatingSystemImpl_getFreeSwapSpaceSize0
   (JNIEnv *env, jobject mbean)
 {
     return get_total_or_available_swap_space_size(env, JNI_TRUE);
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getProcessCpuTime
+Java_sun_management_OperatingSystemImpl_getProcessCpuTime0
   (JNIEnv *env, jobject mbean)
 {
 #ifdef __APPLE__
@@ -309,7 +309,7 @@ Java_sun_management_OperatingSystemImpl_getProcessCpuTime
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getFreePhysicalMemorySize
+Java_sun_management_OperatingSystemImpl_getFreePhysicalMemorySize0
   (JNIEnv *env, jobject mbean)
 {
 #ifdef __APPLE__
@@ -343,7 +343,7 @@ Java_sun_management_OperatingSystemImpl_getFreePhysicalMemorySize
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getTotalPhysicalMemorySize
+Java_sun_management_OperatingSystemImpl_getTotalPhysicalMemorySize0
   (JNIEnv *env, jobject mbean)
 {
 #ifdef _ALLBSD_SOURCE
@@ -374,7 +374,7 @@ Java_sun_management_OperatingSystemImpl_getTotalPhysicalMemorySize
 
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getOpenFileDescriptorCount
+Java_sun_management_OperatingSystemImpl_getOpenFileDescriptorCount0
   (JNIEnv *env, jobject mbean)
 {
 #ifdef __APPLE__
@@ -463,7 +463,7 @@ Java_sun_management_OperatingSystemImpl_getOpenFileDescriptorCount
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_management_OperatingSystemImpl_getMaxFileDescriptorCount
+Java_sun_management_OperatingSystemImpl_getMaxFileDescriptorCount0
   (JNIEnv *env, jobject mbean)
 {
     struct rlimit rlp;

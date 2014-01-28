@@ -1106,11 +1106,8 @@ class SecurityManager {
      * calling thread is not allowed to wait for a connection request on
      * the specified local port number.
      * <p>
-     * If port is not 0, this method calls
-     * <code>checkPermission</code> with the
+     * This method calls <code>checkPermission</code> with the
      * <code>SocketPermission("localhost:"+port,"listen")</code>.
-     * If port is zero, this method calls <code>checkPermission</code>
-     * with <code>SocketPermission("localhost:1024-","listen").</code>
      * <p>
      * If you override this method, then you should make a call to
      * <code>super.checkListen</code>
@@ -1123,12 +1120,8 @@ class SecurityManager {
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
     public void checkListen(int port) {
-        if (port == 0) {
-            checkPermission(SecurityConstants.LOCAL_LISTEN_PERMISSION);
-        } else {
-            checkPermission(new SocketPermission("localhost:"+port,
-                SecurityConstants.SOCKET_LISTEN_ACTION));
-        }
+        checkPermission(new SocketPermission("localhost:"+port,
+            SecurityConstants.SOCKET_LISTEN_ACTION));
     }
 
     /**
@@ -1483,10 +1476,10 @@ class SecurityManager {
         /*
          * Traverse the list of packages, check for any matches.
          */
-        for (int i = 0; i < pkgs.length; i++) {
-            if (pkg.startsWith(pkgs[i]) || pkgs[i].equals(pkg + ".")) {
+        for (String restrictedPkg : pkgs) {
+            if (pkg.startsWith(restrictedPkg) || restrictedPkg.equals(pkg + ".")) {
                 checkPermission(
-                    new RuntimePermission("accessClassInPackage."+pkg));
+                    new RuntimePermission("accessClassInPackage." + pkg));
                 break;  // No need to continue; only need to check this once
             }
         }
@@ -1551,10 +1544,10 @@ class SecurityManager {
         /*
          * Traverse the list of packages, check for any matches.
          */
-        for (int i = 0; i < pkgs.length; i++) {
-            if (pkg.startsWith(pkgs[i]) || pkgs[i].equals(pkg + ".")) {
+        for (String restrictedPkg : pkgs) {
+            if (pkg.startsWith(restrictedPkg) || restrictedPkg.equals(pkg + ".")) {
                 checkPermission(
-                    new RuntimePermission("defineClassInPackage."+pkg));
+                    new RuntimePermission("defineClassInPackage." + pkg));
                 break; // No need to continue; only need to check this once
             }
         }
