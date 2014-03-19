@@ -51,6 +51,7 @@ import sun.awt.image.MultiResolutionImage;
 
 import sun.util.CoreResourceBundleControl;
 
+@SuppressWarnings("serial") // JDK implementation class
 final class NamedCursor extends Cursor {
     NamedCursor(String name) {
         super(name);
@@ -141,6 +142,7 @@ public final class LWCToolkit extends LWToolkit {
         loadNativeColors(systemColors, appleColors);
     }
 
+    @SuppressWarnings("serial") // JDK implementation class
     private static class AppleSpecificColor extends Color {
         private final int index;
         AppleSpecificColor(int index) {
@@ -474,9 +476,11 @@ public final class LWCToolkit extends LWToolkit {
         return true;
     }
 
+    private static final String APPKIT_THREAD_NAME = "AppKit Thread";
+
     // Intended to be called from the LWCToolkit.m only.
     private static void installToolkitThreadNameInJava() {
-        Thread.currentThread().setName(CThreading.APPKIT_THREAD_NAME);
+        Thread.currentThread().setName(APPKIT_THREAD_NAME);
     }
 
     @Override
