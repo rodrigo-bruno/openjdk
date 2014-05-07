@@ -973,7 +973,6 @@ Klass* SystemDictionary::parse_stream(Symbol* class_name,
   if (host_klass.not_null()) {
     // Create a new CLD for anonymous class, that uses the same class loader
     // as the host_klass
-    assert(EnableInvokeDynamic, "");
     guarantee(host_klass->class_loader() == class_loader(), "should be the same");
     loader_data = ClassLoaderData::anonymous_class_loader_data(class_loader(), CHECK_NULL);
     loader_data->record_dependency(host_klass(), CHECK_NULL);
@@ -998,7 +997,6 @@ Klass* SystemDictionary::parse_stream(Symbol* class_name,
 
 
   if (host_klass.not_null() && k.not_null()) {
-    assert(EnableInvokeDynamic, "");
     k->set_host_klass(host_klass());
     // If it's anonymous, initialize it now, since nobody else will.
 
@@ -1879,13 +1877,7 @@ void SystemDictionary::initialize_preloaded_classes(TRAPS) {
   WKID jsr292_group_start = WK_KLASS_ENUM_NAME(MethodHandle_klass);
   WKID jsr292_group_end   = WK_KLASS_ENUM_NAME(VolatileCallSite_klass);
   initialize_wk_klasses_until(jsr292_group_start, scan, CHECK);
-  if (EnableInvokeDynamic) {
-    initialize_wk_klasses_through(jsr292_group_end, scan, CHECK);
-  } else {
-    // Skip the JSR 292 classes, if not enabled.
-    scan = WKID(jsr292_group_end + 1);
-  }
-
+  initialize_wk_klasses_through(jsr292_group_end, scan, CHECK);
   initialize_wk_klasses_until(WKID_LIMIT, scan, CHECK);
 
   _box_klasses[T_BOOLEAN] = WK_KLASS(Boolean_klass);
@@ -2230,7 +2222,6 @@ methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid
                                                             Symbol* signature,
                                                             TRAPS) {
   methodHandle empty;
-  assert(EnableInvokeDynamic, "");
   assert(MethodHandles::is_signature_polymorphic(iid) &&
          MethodHandles::is_signature_polymorphic_intrinsic(iid) &&
          iid != vmIntrinsics::_invokeGeneric,
@@ -2304,7 +2295,6 @@ methodHandle SystemDictionary::find_method_handle_invoker(Symbol* name,
                                                           Handle *method_type_result,
                                                           TRAPS) {
   methodHandle empty;
-  assert(EnableInvokeDynamic, "");
   assert(!THREAD->is_Compiler_thread(), "");
   Handle method_type =
     SystemDictionary::find_method_handle_type(signature, accessing_klass, CHECK_(empty));
