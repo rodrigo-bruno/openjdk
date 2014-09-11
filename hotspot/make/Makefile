@@ -337,7 +337,7 @@ export_optimized:
 export_product_jdk::
 	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR) generic_export
 export_optimized_jdk::
-	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR) generic_export
+	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR)/$(@:export_%_jdk=%) generic_export
 export_fastdebug_jdk::
 	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR)/$(@:export_%_jdk=%) generic_export
 export_debug_jdk::
@@ -890,3 +890,5 @@ include $(GAMMADIR)/make/jprt.gmk
 	create_jdk copy_jdk update_jdk test_jdk \
 	copy_product_jdk copy_fastdebug_jdk copy_debug_jdk  \
 	$(HS_ALT_MAKE)/Makefile.make remove_old_debuginfo
+
+.NOTPARALLEL:
