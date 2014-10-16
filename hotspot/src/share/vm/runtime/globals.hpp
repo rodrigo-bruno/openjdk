@@ -454,7 +454,7 @@ class CommandLineFlags {
 // notproduct flags are settable / visible only during development and are not declared in the PRODUCT version
 
 // A flag must be declared with one of the following types:
-// bool, intx, uintx, ccstr.
+// bool, intx, uintx, ccstr, double, or uint64_t.
 // The type "ccstr" is an alias for "const char*" and is used
 // only in this file, because the macrology requires single-token type names.
 
@@ -3580,6 +3580,10 @@ class CommandLineFlags {
   /* recompilation */                                                       \
   product_pd(intx, CompileThreshold,                                        \
           "number of interpreted method invocations before (re-)compiling") \
+                                                                            \
+  product(double, CompileThresholdScaling, 1.0,                             \
+          "Factor to control when first compilation happens "               \
+          "(both with and without tiered compilation)")                     \
                                                                             \
   product(intx, Tier0InvokeNotifyFreqLog, 7,                                \
           "Interpreter (tier 0) invocation notification frequency")         \
