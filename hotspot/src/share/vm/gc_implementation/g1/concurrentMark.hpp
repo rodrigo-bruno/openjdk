@@ -139,6 +139,11 @@ class CMBitMap : public CMBitMapRO {
   static size_t compute_size(size_t heap_size);
   // Returns the amount of bytes on the heap between two marks in the bitmap.
   static size_t mark_distance();
+  // Returns how many bytes (or bits) of the heap a single byte (or bit) of the
+  // mark bitmap corresponds to. This is the same as the mark distance above.
+  static size_t heap_map_factor() {
+    return mark_distance();
+  }
 
   CMBitMap() : CMBitMapRO(LogMinObjAlignment), _listener() { _listener.set_bitmap(this); }
 
@@ -671,9 +676,7 @@ public:
   }
 
   // Attempts to steal an object from the task queues of other tasks
-  bool try_stealing(uint worker_id, int* hash_seed, oop& obj) {
-    return _task_queues->steal(worker_id, hash_seed, obj);
-  }
+  bool try_stealing(uint worker_id, int* hash_seed, oop& obj);
 
   ConcurrentMark(G1CollectedHeap* g1h,
                  G1RegionToSpaceMapper* prev_bitmap_storage,
