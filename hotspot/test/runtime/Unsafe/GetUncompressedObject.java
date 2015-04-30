@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,26 +19,38 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_PARGCALLOCBUFFER_INLINE_HPP
-#define SHARE_VM_GC_IMPLEMENTATION_SHARED_PARGCALLOCBUFFER_INLINE_HPP
+/* @test
+ * @bug 8022853
+ * @library /testlibrary
+ * @modules java.base/sun.misc
+ * @run main GetUncompressedObject
+ */
 
-#include "gc_implementation/shared/parGCAllocBuffer.hpp"
-#include "gc_interface/collectedHeap.inline.hpp"
+import static com.oracle.java.testlibrary.Asserts.*;
 
-HeapWord* ParGCAllocBuffer::allocate_aligned(size_t word_sz, unsigned short alignment_in_bytes) {
+import com.oracle.java.testlibrary.*;
+import sun.misc.Unsafe;
 
-  HeapWord* res = CollectedHeap::align_allocation_or_fail(_top, _end, alignment_in_bytes);
-  if (res == NULL) {
-    return NULL;
-  }
+public class GetUncompressedObject {
 
-  // Set _top so that allocate(), which expects _top to be correctly set,
-  // can be used below.
-  _top = res;
-  return allocate(word_sz);
+    public static void main(String args[]) throws Exception {
+        Unsafe unsafe = Utils.getUnsafe();
+
+        // Allocate some memory and fill it with non-zero values.
+        final int size = 32;
+        final long address = unsafe.allocateMemory(size);
+        unsafe.setMemory(address, size, (byte) 0x23);
+
+        // The only thing we can do is check for null-ness.
+        // So, store a null somewhere.
+        unsafe.putAddress(address + 16, 0);
+
+        Object nullObj = unsafe.getUncompressedObject(address + 16);
+        if (nullObj != null) {
+            throw new InternalError("should be null");
+        }
+    }
+
 }
-
-#endif // SHARE_VM_GC_IMPLEMENTATION_SHARED_PARGCALLOCBUFFER_INLINE_HPP

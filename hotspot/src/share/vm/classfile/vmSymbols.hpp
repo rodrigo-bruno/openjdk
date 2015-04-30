@@ -533,18 +533,17 @@
   template(java_lang_management_ThreadState,           "java/lang/management/ThreadState")                        \
   template(java_lang_management_MemoryUsage,           "java/lang/management/MemoryUsage")                        \
   template(java_lang_management_ThreadInfo,            "java/lang/management/ThreadInfo")                         \
-  template(sun_management_ManagementFactory,           "sun/management/ManagementFactory")                        \
   template(sun_management_Sensor,                      "sun/management/Sensor")                                   \
   template(sun_management_Agent,                       "sun/management/Agent")                                    \
-  template(sun_management_DiagnosticCommandImpl,       "sun/management/DiagnosticCommandImpl")                    \
-  template(sun_management_GarbageCollectorImpl,        "sun/management/GarbageCollectorImpl")                     \
+  template(com_sun_management_internal_DiagnosticCommandImpl,  "com/sun/management/internal/DiagnosticCommandImpl")     \
+  template(com_sun_management_internal_GarbageCollectorExtImpl,"com/sun/management/internal/GarbageCollectorExtImpl")   \
   template(sun_management_ManagementFactoryHelper,     "sun/management/ManagementFactoryHelper")                  \
   template(getDiagnosticCommandMBean_name,             "getDiagnosticCommandMBean")                               \
   template(getDiagnosticCommandMBean_signature,        "()Lcom/sun/management/DiagnosticCommandMBean;")           \
   template(getGcInfoBuilder_name,                      "getGcInfoBuilder")                                        \
-  template(getGcInfoBuilder_signature,                 "()Lsun/management/GcInfoBuilder;")                        \
+  template(getGcInfoBuilder_signature,                 "()Lcom/sun/management/internal/GcInfoBuilder;")           \
   template(com_sun_management_GcInfo,                  "com/sun/management/GcInfo")                               \
-  template(com_sun_management_GcInfo_constructor_signature, "(Lsun/management/GcInfoBuilder;JJJ[Ljava/lang/management/MemoryUsage;[Ljava/lang/management/MemoryUsage;[Ljava/lang/Object;)V") \
+  template(com_sun_management_GcInfo_constructor_signature, "(Lcom/sun/management/internal/GcInfoBuilder;JJJ[Ljava/lang/management/MemoryUsage;[Ljava/lang/management/MemoryUsage;[Ljava/lang/Object;)V") \
   template(createGCNotification_name,                  "createGCNotification")                                    \
   template(createGCNotification_signature,             "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/management/GcInfo;)V") \
   template(createDiagnosticFrameworkNotification_name, "createDiagnosticFrameworkNotification")                   \
@@ -561,6 +560,7 @@
   template(startRemoteAgent_name,                      "startRemoteManagementAgent")                              \
   template(startLocalAgent_name,                       "startLocalManagementAgent")                               \
   template(stopRemoteAgent_name,                       "stopRemoteManagementAgent")                               \
+  template(getAgentStatus_name,                        "getManagementAgentStatus")                                \
   template(java_lang_management_ThreadInfo_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;)V") \
   template(java_lang_management_ThreadInfo_with_locks_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;[Ljava/lang/Object;[I[Ljava/lang/Object;)V") \
   template(long_long_long_long_void_signature,         "(JJJJ)V")                                                 \

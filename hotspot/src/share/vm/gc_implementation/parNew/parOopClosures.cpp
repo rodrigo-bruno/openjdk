@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,10 @@
  *
  */
 
-#ifndef CPU_X86_VM_TEMPLATETABLE_X86_32_HPP
-#define CPU_X86_VM_TEMPLATETABLE_X86_32_HPP
+#include "precompiled.hpp"
+#include "memory/iterator.inline.hpp"
+#include "memory/specialized_oop_closures.hpp"
+#include "gc_implementation/parNew/parOopClosures.inline.hpp"
 
-  static void prepare_invoke(int byte_no,
-                             Register method,         // linked method (or i-klass)
-                             Register index = noreg,  // itable index, MethodType, etc.
-                             Register recv  = noreg,  // if caller wants to see it
-                             Register flags = noreg   // if caller wants to test it
-                             );
-  static void invokevirtual_helper(Register index, Register recv,
-                                   Register flags);
-  static void volatile_barrier(Assembler::Membar_mask_bits order_constraint);
-
-  // Helpers
-  static void index_check(Register array, Register index);
-  static void index_check_without_pop(Register array, Register index);
-
-#endif // CPU_X86_VM_TEMPLATETABLE_X86_32_HPP
+// Generate ParNew specialized oop_oop_iterate functions.
+SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_P(ALL_KLASS_OOP_OOP_ITERATE_DEFN);

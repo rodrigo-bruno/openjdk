@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,40 +19,28 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-package sun.jvm.hotspot.memory;
+/* @test
+ * @bug 8022853
+ * @library /testlibrary
+ * @modules java.base/sun.misc
+ * @run main GetKlassPointerGetJavaMirror
+ */
 
-import java.io.*;
-import java.util.*;
+import static com.oracle.java.testlibrary.Asserts.*;
 
-import sun.jvm.hotspot.debugger.*;
-import sun.jvm.hotspot.gc_interface.*;
-import sun.jvm.hotspot.runtime.*;
-import sun.jvm.hotspot.types.*;
+import com.oracle.java.testlibrary.*;
+import sun.misc.Unsafe;
 
-public abstract class SharedHeap extends CollectedHeap {
-  private static VirtualConstructor ctor;
+public class GetKlassPointerGetJavaMirror {
 
-  static {
-    VM.registerVMInitializedObserver(new Observer() {
-        public void update(Observable o, Object data) {
-          initialize(VM.getVM().getTypeDataBase());
-        }
-      });
-  }
+    public static void main(String args[]) throws Exception {
+        Unsafe unsafe = Utils.getUnsafe();
+        Object o = new GetKlassPointerGetJavaMirror();
+        final long metaspaceKlass = unsafe.getKlassPointer(o);
+        Class<?> c = unsafe.getJavaMirror(metaspaceKlass);
+        assertEquals(o.getClass(), c);
+    }
 
-  private static synchronized void initialize(TypeDataBase db) {
-    Type type = db.lookupType("SharedHeap");
-    ctor = new VirtualConstructor(db);
-  }
-
-  public SharedHeap(Address addr) {
-    super(addr);
-  }
-
-  public CollectedHeapName kind() {
-    return CollectedHeapName.SHARED_HEAP;
-  }
-  }
+}

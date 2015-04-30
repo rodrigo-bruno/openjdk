@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,23 @@
  *
  */
 
-#ifndef CPU_X86_VM_TEMPLATETABLE_X86_64_HPP
-#define CPU_X86_VM_TEMPLATETABLE_X86_64_HPP
+#ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_PLAB_INLINE_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_SHARED_PLAB_INLINE_HPP
 
-  static void prepare_invoke(int byte_no,
-                             Register method,         // linked method (or i-klass)
-                             Register index = noreg,  // itable index, MethodType, etc.
-                             Register recv  = noreg,  // if caller wants to see it
-                             Register flags = noreg   // if caller wants to test it
-                             );
-  static void invokevirtual_helper(Register index, Register recv,
-                                   Register flags);
-  static void volatile_barrier(Assembler::Membar_mask_bits order_constraint);
+#include "gc_implementation/shared/plab.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
 
-  // Helpers
-  static void index_check(Register array, Register index);
-  static void index_check_without_pop(Register array, Register index);
+HeapWord* PLAB::allocate_aligned(size_t word_sz, unsigned short alignment_in_bytes) {
 
-#endif // CPU_X86_VM_TEMPLATETABLE_X86_64_HPP
+  HeapWord* res = CollectedHeap::align_allocation_or_fail(_top, _end, alignment_in_bytes);
+  if (res == NULL) {
+    return NULL;
+  }
+
+  // Set _top so that allocate(), which expects _top to be correctly set,
+  // can be used below.
+  _top = res;
+  return allocate(word_sz);
+}
+
+#endif // SHARE_VM_GC_IMPLEMENTATION_SHARED_PLAB_INLINE_HPP
