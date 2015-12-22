@@ -20,25 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.hotspotvmconfig;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * Annotates a field in HotSpotVMConfig which is not read from the VM but is calculated manually.
+/*
+ * @test
+ * @library /test/lib /testlibrary /
+ * @build compiler.calls.common.InvokeDynamic
+ * @build compiler.calls.common.InvokeDynamicPatcher
+ * @run driver compiler.calls.common.InvokeDynamicPatcher
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *    sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
+ *    -XX:CompileCommand=exclude,compiler.calls.common.InvokeDynamic::caller  compiler.calls.common.InvokeDynamic
+ *    -checkCallerCompileLevel 0 -nativeCallee
+ * @summary check calls from interpreted to native using InvokeDynamic
  */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HotSpotVMManual {
-
-    /**
-     * Returns the name associated with that field.
-     *
-     * @return name associated with field
-     */
-    String name();
-
-}

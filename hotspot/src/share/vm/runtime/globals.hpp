@@ -857,6 +857,9 @@ public:
   product(bool, UseAdler32Intrinsics, false,                                \
           "use intrinsics for java.util.zip.Adler32")                       \
                                                                             \
+  product(bool, UseVectorizedMismatchIntrinsic, false,                      \
+          "Enables intrinsification of ArraysSupport.vectorizedMismatch()") \
+                                                                            \
   diagnostic(ccstrlist, DisableIntrinsic, "",                               \
          "do not expand intrinsics whose (internal) names appear here")     \
                                                                             \
@@ -4174,8 +4177,11 @@ public:
   diagnostic(bool, CompilerDirectivesIgnoreCompileCommands, false,          \
              "Disable backwards compatibility for compile commands.")       \
                                                                             \
-  diagnostic(bool, PrintCompilerDirectives, false,                          \
-             "Print compiler directives on installation.")
+  diagnostic(bool, CompilerDirectivesPrint, false,                          \
+             "Print compiler directives on installation.")                  \
+  diagnostic(int,  CompilerDirectivesLimit, 50,                             \
+             "Limit on number of compiler directives.")
+
 
 /*
  *  Macros for factoring of globals
