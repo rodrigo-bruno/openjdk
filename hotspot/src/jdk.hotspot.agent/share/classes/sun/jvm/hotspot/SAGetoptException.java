@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,12 @@
  *
  */
 
-/**
- * @test
- * @bug 6859338
- * @summary Assertion failure in sharedRuntime.cpp
- *
- * @run main/othervm -Xcomp -XX:+IgnoreUnrecognizedVMOptions  -XX:-InlineObjectHash -Xbatch -XX:-ProfileInterpreter Test6859338
- */
+package sun.jvm.hotspot;
 
-public class Test6859338 {
-    static Object[] o = new Object[] { new Object(), null };
-    public static void main(String[] args) {
-        int total = 0;
-        try {
-            // Exercise the implicit null check in the unverified entry point
-            for (int i = 0; i < 40000; i++) {
-                int limit = o.length;
-                if (i < 20000) limit = 1;
-                for (int j = 0; j < limit; j++) {
-                    total += o[j].hashCode();
-                }
-            }
+public class SAGetoptException extends IllegalArgumentException {
 
-        } catch (NullPointerException e) {
-            // this is expected.  A true failure causes a crash
-        }
+    public SAGetoptException(String message) {
+        super(message);
     }
+
 }
