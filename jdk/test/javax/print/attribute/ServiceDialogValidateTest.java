@@ -20,75 +20,78 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
- /*
+/*
  * @test
- * @bug 6966350 8160882
- * @summary Verifies if Empty pages are printed on Lexmark E352dn PS3
- *           with "1200 IQ" setting
- * @run main/manual PrintTestLexmarkIQ
+ * @bug 5049012
+ * @summary Verify if PrintToFile option is disabled for flavors that do not
+ *          support Destination
+ * @requires (os.family == "linux")
+ * @run main/manual ServiceDialogValidateTest
  */
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.geom.Rectangle2D;
-import java.awt.print.PageFormat;
-import java.awt.print.Paper;
-import java.awt.print.Printable;
-import static java.awt.print.Printable.NO_SUCH_PAGE;
-import static java.awt.print.Printable.PAGE_EXISTS;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
+import java.io.File;
+import javax.print.DocFlavor;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import javax.print.ServiceUI;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.standard.Destination;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-public class PrintTestLexmarkIQ implements Printable {
-
+public class ServiceDialogValidateTest {
     private static Thread mainThread;
     private static boolean testPassed;
     private static boolean testGeneratedInterrupt;
 
-    public static void main(String[] args) throws Exception {
+    private static void printTest() {
+        PrintService defService = null, service[] = null;
+        HashPrintRequestAttributeSet prSet = new HashPrintRequestAttributeSet();
+        DocFlavor flavor = DocFlavor.INPUT_STREAM.JPEG;
+
+        service = PrintServiceLookup.lookupPrintServices(flavor, null);
+        defService = PrintServiceLookup.lookupDefaultPrintService();
+
+        if ((service == null) || (service.length == 0)) {
+            throw new RuntimeException("No Printer services found");
+        }
+        File f = new File("output.ps");
+        Destination d = new Destination(f.toURI());
+        prSet.add(d);
+        if (defService != null) {
+            System.out.println("isAttrCategory Supported? " +
+                    defService.isAttributeCategorySupported(Destination.class));
+            System.out.println("isAttrValue Supported? " +
+                    defService.isAttributeValueSupported(d, flavor, null));
+        }
+
+        defService = ServiceUI.printDialog(null, 100, 100, service, defService,
+                flavor, prSet);
+
+    }
+
+    /**
+     * Starts the application.
+     */
+    public static void main(java.lang.String[] args) throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            doTest(PrintTestLexmarkIQ::printTest);
+            doTest(ServiceDialogValidateTest::printTest);
         });
         mainThread = Thread.currentThread();
         try {
-            Thread.sleep(90000);
+            Thread.sleep(60000);
         } catch (InterruptedException e) {
             if (!testPassed && testGeneratedInterrupt) {
-                throw new RuntimeException(" Empty pages printed ");
+                throw new RuntimeException("PrintToFile option is not disabled "
+                        + "for flavors that do not support destination");
             }
         }
         if (!testGeneratedInterrupt) {
             throw new RuntimeException("user has not executed the test");
-        }
-    }
-
-    private static void printTest() {
-        PrinterJob pj = PrinterJob.getPrinterJob();
-
-        PageFormat pf = pj.defaultPage();
-        Paper paper = new Paper();
-        double margin = 36; // half inch
-        paper.setImageableArea(margin, margin, paper.getWidth() - margin * 2,
-                paper.getHeight() - margin * 2);
-        pf.setPaper(paper);
-
-        pj.setPrintable(new PrintTestLexmarkIQ(), pf);
-        if (pj.printDialog()) {
-            try {
-                pj.print();
-            } catch (PrinterException e) {
-                System.out.println(e);
-            }
         }
     }
 
@@ -106,16 +109,14 @@ public class PrintTestLexmarkIQ implements Printable {
 
     private static void doTest(Runnable action) {
         String description
-                = " Install Lexmark E352dn PS3 or Dell 5310n printer.\n"
-                + " A print dialog will be shown.\n"
-                + " Select Normal 1200IQ setting in Properties->PrintQuality in Dell 5310n \n"
-                + " or for Lexmark E352dn printer, select Normal 1200IQ setting in\n "
-                + " Properties -> Advanced -> Graphic -> Print Quality.\n"
-                + " Press Print. Verify the print output.\n "
-                + " If empty page is printed, press Fail else press Pass.";
+                = " Visual inspection of print dialog is required.\n"
+                + " A print dialog will be shown.\n "
+                + " Please verify Print-To-File option is disabled.\n"
+                + " Press Cancel to close the print dialog.\n"
+                + " If Print-To-File option is disabled, press PASS else press FAIL";
 
         final JDialog dialog = new JDialog();
-        dialog.setTitle("1200IQTest");
+        dialog.setTitle("printSelectionTest");
         JTextArea textArea = new JTextArea(description);
         textArea.setEditable(false);
         final JButton testButton = new JButton("Start Test");
@@ -147,29 +148,7 @@ public class PrintTestLexmarkIQ implements Printable {
         dialog.add(mainPanel);
         dialog.pack();
         dialog.setVisible(true);
-        dialog.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                System.out.println("main dialog closing");
-                testGeneratedInterrupt = false;
-                mainThread.interrupt();
-            }
-        });
     }
-
-    public int print(Graphics g, PageFormat pf, int pi)
-            throws PrinterException {
-        if (pi != 0) {
-            return NO_SUCH_PAGE;
-        }
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setFont(new Font("Serif", Font.PLAIN, 36));
-        g2.setPaint(Color.black);
-        g2.drawString("Java Source and Support", 100, 100);
-        Rectangle2D outline = new Rectangle2D.Double(pf.getImageableX(), pf
-                .getImageableY(), pf.getImageableWidth(), pf
-                .getImageableHeight());
-        g2.draw(outline);
-        return PAGE_EXISTS;
-    }
-
 }
+
+
