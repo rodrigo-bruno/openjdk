@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,35 +21,19 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug 8078600
- * @summary Make sure -XDcompletionDeps does not cause an infinite loop.
- * @library /tools/lib
- * @modules jdk.compiler/com.sun.tools.javac.api
- *          jdk.compiler/com.sun.tools.javac.main
- * @build toolbox.ToolBox toolbox.JavacTask
- * @run main/othervm/timeout=10 DepsAndAnno
+ * @bug 8048543
+ * @summary JLS8 18.5.3: inference variable seems to be instantiated unexpectedly
+ * @compile InferenceVariableInstantiatedUnexpectedlyTest.java
  */
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+public class InferenceVariableInstantiatedUnexpectedlyTest {
+    interface Iface<A1 extends A2, A2> {
+        String m(A1 t);
+    }
 
-import toolbox.JavacTask;
-import toolbox.Task;
-import toolbox.ToolBox;
-
-public class DepsAndAnno {
-
-    @Target(ElementType.METHOD)
-    @interface Test { }
-
-    public static void main(String[] args) {
-        ToolBox toolBox = new ToolBox();
-        new JavacTask(toolBox, Task.Mode.CMDLINE)
-               .options("-Xdebug:completionDeps")
-               .outdir(".")
-               .files(ToolBox.testSrc + "/DepsAndAnno.java")
-               .run();
+    public void run() {
+        Iface<? super Integer, Number> i = (Integer a) -> a.toString();
     }
 }
