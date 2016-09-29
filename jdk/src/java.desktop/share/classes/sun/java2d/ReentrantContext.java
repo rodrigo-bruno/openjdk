@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package sun.java2d;
 
-package com.apple.concurrent;
+import java.lang.ref.Reference;
 
-import java.util.concurrent.Executor;
-
-abstract class LibDispatchMainQueue extends LibDispatchQueue implements Executor {
-        public LibDispatchMainQueue() {
-                super(LibDispatchNative.nativeGetMainQueue());
-        }
-
-        @Override
-        protected synchronized void dispose() {
-                // should not dispose the main queue
-        }
-
-        static class Sync extends LibDispatchMainQueue {
-                @Override
-                public void execute(final Runnable task) {
-                        LibDispatchNative.nativeExecuteSync(ptr, task);
-                }
-        }
-
-        static class ASync extends LibDispatchMainQueue {
-                @Override
-                public void execute(final Runnable task) {
-                        LibDispatchNative.nativeExecuteAsync(ptr, task);
-                }
-        }
+/**
+ * ReentrantContext is a base class to hold thread-local data supporting
+ * reentrancy in either a ThreadLocal or a ConcurrentLinkedQueue
+ *
+ * @see ReentrantContextProvider
+ */
+public class ReentrantContext {
+    // usage stored as a byte
+    byte usage = ReentrantContextProvider.USAGE_TL_INACTIVE;
+    /*
+     * Reference to this instance (hard, soft or weak).
+     * @see ReentrantContextProvider#refType
+     */
+    Reference<? extends ReentrantContext> reference = null;
 }
