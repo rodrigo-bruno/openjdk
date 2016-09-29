@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,23 @@
 
 /*
  * @test
- * @bug 4984158
- * @summary two inherited methods with same signature
- * @author gafter, Maurizio Cimadamore
- *
- * @compile -source 1.5 InheritanceConflict2.java
+ * @bug 6682380 6679509
+ * @summary Foreach loop with generics inside finally block crashes javac with -target 1.5
+ * @author Jan Lahoda, Maurizio Cimadamore
+ * @compile -target 1.5 T6682380.java
  */
 
-package inheritance.conflict2;
+import java.util.List;
 
-class A<T> {
-    void f(String s) {}
-}
+public class T6682380<X> {
 
-class B<T> extends A<T> {
-    void f(T t) {}
-}
-
-class C extends B<String> {
-    void f(String s) {}
+    public static void main(String[] args) {
+        try {
+        } finally {
+            List<T6682380<?>> l = null;
+            T6682380<?>[] a = null;
+            for (T6682380<?> e1 : l);
+            for (T6682380<?> e2 : a);
+        }
+    }
 }
