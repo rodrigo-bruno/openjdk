@@ -28,12 +28,12 @@ package jdk.nashorn.internal.codegen;
 /**
  * Used to track split class compilation.
  */
-public class CompileUnit {
+public class CompileUnit implements Comparable<CompileUnit> {
     /** Current class name */
     private final String className;
 
     /** Current class generator */
-    private final ClassEmitter classEmitter;
+    private ClassEmitter classEmitter;
 
     private long weight;
 
@@ -64,7 +64,11 @@ public class CompileUnit {
      * @param clazz class with code for this compile unit
      */
     void setCode(final Class<?> clazz) {
+        clazz.getClass(); // null check
         this.clazz = clazz;
+        // Revisit this - refactor to avoid null-ed out non-final fields
+        // null out emitter
+        this.classEmitter = null;
     }
 
     /**
@@ -111,5 +115,10 @@ public class CompileUnit {
     @Override
     public String toString() {
         return "[classname=" + className + " weight=" + weight + '/' + Splitter.SPLIT_THRESHOLD + ']';
+    }
+
+    @Override
+    public int compareTo(CompileUnit o) {
+        return className.compareTo(o.className);
     }
 }

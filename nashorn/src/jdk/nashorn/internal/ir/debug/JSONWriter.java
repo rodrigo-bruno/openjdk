@@ -27,18 +27,19 @@ package jdk.nashorn.internal.ir.debug;
 
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.ArrayList;
 import jdk.nashorn.internal.codegen.CompilerConstants;
 import jdk.nashorn.internal.ir.AccessNode;
 import jdk.nashorn.internal.ir.BinaryNode;
 import jdk.nashorn.internal.ir.Block;
+import jdk.nashorn.internal.ir.BlockStatement;
 import jdk.nashorn.internal.ir.BreakNode;
 import jdk.nashorn.internal.ir.CallNode;
 import jdk.nashorn.internal.ir.CaseNode;
 import jdk.nashorn.internal.ir.CatchNode;
 import jdk.nashorn.internal.ir.ContinueNode;
 import jdk.nashorn.internal.ir.EmptyNode;
-import jdk.nashorn.internal.ir.ExecuteNode;
+import jdk.nashorn.internal.ir.ExpressionStatement;
 import jdk.nashorn.internal.ir.ForNode;
 import jdk.nashorn.internal.ir.FunctionNode;
 import jdk.nashorn.internal.ir.IdentNode;
@@ -197,10 +198,10 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         comma();
 
         final IdentNode label = breakNode.getLabel();
+        property("label");
         if (label != null) {
-            property("label", label.getName());
+            label.accept(this);
         } else {
-            property("label");
             nullValue();
         }
 
@@ -256,13 +257,11 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         comma();
 
         final Node guard = catchNode.getExceptionCondition();
-        property("guard");
         if (guard != null) {
+            property("guard");
             guard.accept(this);
-        } else {
-            nullValue();
+            comma();
         }
-        comma();
 
         property("body");
         catchNode.getBody().accept(this);
@@ -278,10 +277,10 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         comma();
 
         final IdentNode label = continueNode.getLabel();
+        property("label");
         if (label != null) {
-            property("label", label.getName());
+            label.accept(this);
         } else {
-            property("label");
             nullValue();
         }
 
@@ -298,14 +297,34 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
     }
 
     @Override
-    public boolean enterExecuteNode(final ExecuteNode executeNode) {
-        enterDefault(executeNode);
+    public boolean enterExpressionStatement(final ExpressionStatement expressionStatement) {
+        // handle debugger statement
+        final Node expression = expressionStatement.getExpression();
+        if (expression instanceof RuntimeNode) {
+            expression.accept(this);
+            return false;
+        }
+
+        enterDefault(expressionStatement);
 
         type("ExpressionStatement");
         comma();
 
         property("expression");
-        executeNode.getExpression().accept(this);
+        expression.accept(this);
+
+        return leave();
+    }
+
+    @Override
+    public boolean enterBlockStatement(BlockStatement blockStatement) {
+        enterDefault(blockStatement);
+
+        type("BlockStatement");
+        comma();
+
+        property("block");
+        blockStatement.getBlock().accept(this);
 
         return leave();
     }
@@ -375,13 +394,14 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
 
     @Override
     public boolean enterFunctionNode(final FunctionNode functionNode) {
-        enterDefault(functionNode);
-
         final boolean program = functionNode.isProgram();
-        final String name;
         if (program) {
-            name = "Program";
-        } else if (functionNode.isDeclared()) {
+            return emitProgram(functionNode);
+        }
+
+        enterDefault(functionNode);
+        final String name;
+        if (functionNode.isDeclared()) {
             name = "FunctionDeclaration";
         } else {
             name = "FunctionExpression";
@@ -389,24 +409,42 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         type(name);
         comma();
 
-        if (! program) {
-            property("id");
-            if (functionNode.isAnonymous()) {
-                nullValue();
-            } else {
-                functionNode.getIdent().accept(this);
-            }
-            comma();
+        property("id");
+        final FunctionNode.Kind kind = functionNode.getKind();
+        if (functionNode.isAnonymous() || kind == FunctionNode.Kind.GETTER || kind == FunctionNode.Kind.SETTER) {
+            nullValue();
+        } else {
+            functionNode.getIdent().accept(this);
         }
+        comma();
+
+        array("params", functionNode.getParameters());
+        comma();
+
+        arrayStart("defaults");
+        arrayEnd();
+        comma();
 
         property("rest");
         nullValue();
         comma();
 
-        if (!program) {
-            array("params", functionNode.getParameters());
-            comma();
-        }
+        property("body");
+        functionNode.getBody().accept(this);
+        comma();
+
+        property("generator", false);
+        comma();
+
+        property("expression", false);
+
+        return leave();
+    }
+
+    private boolean emitProgram(final FunctionNode functionNode) {
+        enterDefault(functionNode);
+        type("Program");
+        comma();
 
         // body consists of nested functions and statements
         final List<Statement> stats = functionNode.getBody().getStatements();
@@ -514,7 +552,7 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
             type("ArrayExpression");
             comma();
 
-            final Node[] value = (Node[])literalNode.getValue();
+            final Node[] value = literalNode.getArray();
             array("elements", Arrays.asList(value));
         } else {
             type("Literal");
@@ -680,15 +718,15 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         comma();
 
         property("test");
-        ternaryNode.lhs().accept(this);
+        ternaryNode.getTest().accept(this);
         comma();
 
         property("consequent");
-        ternaryNode.rhs().accept(this);
+        ternaryNode.getTrueExpression().accept(this);
         comma();
 
         property("alternate");
-        ternaryNode.third().accept(this);
+        ternaryNode.getFalseExpression().accept(this);
 
         return leave();
     }
@@ -717,7 +755,31 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         tryNode.getBody().accept(this);
         comma();
 
-        array("handlers", tryNode.getCatches());
+
+        final List<? extends Node> catches = tryNode.getCatches();
+        final List<CatchNode> guarded = new ArrayList<>();
+        CatchNode unguarded = null;
+        if (catches != null) {
+            for (Node n : catches) {
+                CatchNode cn = (CatchNode)n;
+                if (cn.getExceptionCondition() != null) {
+                    guarded.add(cn);
+                } else {
+                    assert unguarded == null: "too many unguarded?";
+                    unguarded = cn;
+                }
+            }
+        }
+
+        array("guardedHandlers", guarded);
+        comma();
+
+        property("handler");
+        if (unguarded != null) {
+            unguarded.accept(this);
+        } else {
+            nullValue();
+        }
         comma();
 
         property("finalizer");
@@ -747,8 +809,8 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
 
             array("arguments", callNode.getArgs());
         } else {
-            final boolean prefix;
             final String operator;
+            final boolean prefix;
             switch (tokenType) {
             case INCPOSTFIX:
                 prefix = false;
@@ -767,8 +829,9 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
                 prefix = true;
                 break;
             default:
-                prefix = false;
+                prefix = true;
                 operator = tokenType.getName();
+                break;
             }
 
             type(unaryNode.isAssignment()? "UpdateExpression" : "UnaryExpression");
@@ -789,6 +852,14 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
 
     @Override
     public boolean enterVarNode(final VarNode varNode) {
+        final Node init = varNode.getInit();
+        if (init instanceof FunctionNode && ((FunctionNode)init).isDeclared()) {
+            // function declaration - don't emit VariableDeclaration instead
+            // just emit FunctionDeclaration using 'init' Node.
+            init.accept(this);
+            return false;
+        }
+
         enterDefault(varNode);
 
         type("VariableDeclaration");
@@ -803,11 +874,11 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         type("VariableDeclarator");
         comma();
 
-        property("id", varNode.getName().toString());
+        property("id");
+        varNode.getName().accept(this);
         comma();
 
         property("init");
-        final Node init = varNode.getInit();
         if (init != null) {
             init.accept(this);
         } else {
@@ -842,7 +913,7 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
             whileNode.getTest().accept(this);
             comma();
 
-            property("block");
+            property("body");
             whileNode.getBody().accept(this);
         }
 
@@ -881,23 +952,27 @@ public final class JSONWriter extends NodeVisitor<LexicalContext> {
         return buf.toString();
     }
 
-    private void property(final String key, final String value) {
+    private void property(final String key, final String value, final boolean escape) {
         buf.append('"');
         buf.append(key);
         buf.append("\":");
         if (value != null) {
-            buf.append('"');
+            if (escape) buf.append('"');
             buf.append(value);
-            buf.append('"');
+            if (escape) buf.append('"');
         }
     }
 
+    private void property(final String key, final String value) {
+        property(key, value, true);
+    }
+
     private void property(final String key, final boolean value) {
-        property(key, Boolean.toString(value));
+        property(key, Boolean.toString(value), false);
     }
 
     private void property(final String key, final int value) {
-        property(key, Integer.toString(value));
+        property(key, Integer.toString(value), false);
     }
 
     private void property(final String key) {

@@ -169,7 +169,7 @@ public final class Source {
 
         final Source src = (Source)obj;
         // Only compare content as a last resort measure
-        return length == src.length && Objects.equals(name, src.name) && Arrays.equals(content, src.content);
+        return length == src.length && Objects.equals(url, src.url) && Objects.equals(name, src.name) && Arrays.equals(content, src.content);
     }
 
     @Override
@@ -272,6 +272,10 @@ public final class Source {
 
     /**
      * Return line number of character position.
+     *
+     * <p>This method can be expensive for large sources as it iterates through
+     * all characters up to {@code position}.</p>
+     *
      * @param position Position of character in source content.
      * @return Line number.
      */
@@ -384,11 +388,7 @@ public final class Source {
         }
 
         final byte[] buf = Files.readAllBytes(file.toPath());
-        if (cs != null) {
-            return new String(buf, cs).toCharArray();
-        } else {
-            return byteToCharArray(buf);
-        }
+        return (cs != null)? new String(buf, cs).toCharArray() : byteToCharArray(buf);
     }
 
     /**
@@ -465,11 +465,7 @@ public final class Source {
     }
 
     private static char[] readFully(final InputStream is, final Charset cs) throws IOException {
-        if (cs != null) {
-            return new String(readBytes(is), cs).toCharArray();
-        } else {
-            return readFully(is);
-        }
+        return (cs != null)? new String(readBytes(is), cs).toCharArray() : readFully(is);
     }
 
     private static char[] readFully(final InputStream is) throws IOException {

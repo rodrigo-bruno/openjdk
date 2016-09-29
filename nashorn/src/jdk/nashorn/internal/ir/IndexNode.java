@@ -25,7 +25,6 @@
 
 package jdk.nashorn.internal.ir;
 
-import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
 
@@ -35,7 +34,7 @@ import jdk.nashorn.internal.ir.visitor.NodeVisitor;
 @Immutable
 public final class IndexNode extends BaseNode {
     /** Property index. */
-    private final Node index;
+    private final Expression index;
 
     /**
      * Constructors
@@ -45,13 +44,13 @@ public final class IndexNode extends BaseNode {
      * @param base    base node for access
      * @param index   index for access
      */
-    public IndexNode(final long token, final int finish, final Node base, final Node index) {
-        super(token, finish, base, false, false);
+    public IndexNode(final long token, final int finish, final Expression base, final Expression index) {
+        super(token, finish, base, false);
         this.index = index;
     }
 
-    private IndexNode(final IndexNode indexNode, final Node base, final Node index, final boolean isFunction, final boolean hasCallSiteType) {
-        super(indexNode, base, isFunction, hasCallSiteType);
+    private IndexNode(final IndexNode indexNode, final Expression base, final Expression index, final boolean isFunction) {
+        super(indexNode, base, isFunction);
         this.index = index;
     }
 
@@ -59,8 +58,8 @@ public final class IndexNode extends BaseNode {
     public Node accept(final NodeVisitor<? extends LexicalContext> visitor) {
         if (visitor.enterIndexNode(this)) {
             return visitor.leaveIndexNode(
-                setBase(base.accept(visitor)).
-                setIndex(index.accept(visitor)));
+                setBase((Expression)base.accept(visitor)).
+                setIndex((Expression)index.accept(visitor)));
         }
         return this;
     }
@@ -68,13 +67,6 @@ public final class IndexNode extends BaseNode {
     @Override
     public void toString(final StringBuilder sb) {
         final boolean needsParen = tokenType().needsParens(base.tokenType(), true);
-
-        if (hasCallSiteType()) {
-            sb.append('{');
-            final String desc = getType().getDescriptor();
-            sb.append(desc.charAt(desc.length() - 1) == ';' ? "O" : getType().getDescriptor());
-            sb.append('}');
-        }
 
         if (needsParen) {
             sb.append('(');
@@ -95,15 +87,15 @@ public final class IndexNode extends BaseNode {
      * Get the index expression for this IndexNode
      * @return the index
      */
-    public Node getIndex() {
+    public Expression getIndex() {
         return index;
     }
 
-    private IndexNode setBase(final Node base) {
+    private IndexNode setBase(final Expression base) {
         if (this.base == base) {
             return this;
         }
-        return new IndexNode(this, base, index, isFunction(), hasCallSiteType());
+        return new IndexNode(this, base, index, isFunction());
     }
 
     /**
@@ -111,11 +103,11 @@ public final class IndexNode extends BaseNode {
      * @param index new index expression
      * @return a node equivalent to this one except for the requested change.
      */
-    public IndexNode setIndex(Node index) {
+    public IndexNode setIndex(Expression index) {
         if(this.index == index) {
             return this;
         }
-        return new IndexNode(this, base, index, isFunction(), hasCallSiteType());
+        return new IndexNode(this, base, index, isFunction());
     }
 
     @Override
@@ -123,14 +115,7 @@ public final class IndexNode extends BaseNode {
         if (isFunction()) {
             return this;
         }
-        return new IndexNode(this, base, index, true, hasCallSiteType());
-    }
-
-    @Override
-    public IndexNode setType(final TemporarySymbols ts, final LexicalContext lc, final Type type) {
-        logTypeChange(type);
-        final IndexNode newIndexNode = (IndexNode)setSymbol(lc, getSymbol().setTypeOverrideShared(type, ts));
-        return new IndexNode(newIndexNode, base, index, isFunction(), true);
+        return new IndexNode(this, base, index, true);
     }
 
 }

@@ -65,12 +65,22 @@ public final class NativeRegExp extends ScriptObject {
     private RegExp regexp;
 
     // Reference to global object needed to support static RegExp properties
-    private Global globalObject;
+    private final Global globalObject;
 
     // initialized by nasgen
     private static PropertyMap $nasgenmap$;
 
-    NativeRegExp(final String input, final String flagString) {
+    static PropertyMap getInitialMap() {
+        return $nasgenmap$;
+    }
+
+    private NativeRegExp(final Global global) {
+        super(global.getRegExpPrototype(), global.getRegExpMap());
+        this.globalObject = global;
+    }
+
+    NativeRegExp(final String input, final String flagString, final Global global) {
+        this(global);
         try {
             this.regexp = RegExpFactory.create(input, flagString);
         } catch (final ParserException e) {
@@ -80,17 +90,24 @@ public final class NativeRegExp extends ScriptObject {
         }
 
         this.setLastIndex(0);
-        init();
+    }
+
+    NativeRegExp(final String input, final String flagString) {
+        this(input, flagString, Global.instance());
+    }
+
+    NativeRegExp(final String string, final Global global) {
+        this(string, "", global);
     }
 
     NativeRegExp(final String string) {
-        this(string, "");
+        this(string, Global.instance());
     }
 
     NativeRegExp(final NativeRegExp regExp) {
+        this(Global.instance());
         this.lastIndex  = regExp.getLastIndexObject();
         this.regexp      = regExp.getRegExp();
-        init();
     }
 
     @Override
@@ -174,21 +191,19 @@ public final class NativeRegExp extends ScriptObject {
     public static NativeRegExp newRegExp(final Object regexp, final Object flags) {
         String  patternString = "";
         String  flagString    = "";
-        boolean flagsDefined  = false;
-
-        if (flags != UNDEFINED) {
-            flagsDefined = true;
-            flagString = JSType.toString(flags);
-        }
 
         if (regexp != UNDEFINED) {
             if (regexp instanceof NativeRegExp) {
-                if (!flagsDefined) {
-                    return (NativeRegExp)regexp; // 15.10.3.1 - undefined flags and regexp as
+                if (flags != UNDEFINED) {
+                    throw typeError("regex.cant.supply.flags");
                 }
-                throw typeError("regex.cant.supply.flags");
+                return (NativeRegExp)regexp; // 15.10.3.1 - undefined flags and regexp as
             }
             patternString = JSType.toString(regexp);
+        }
+
+        if (flags != UNDEFINED) {
+            flagString = JSType.toString(flags);
         }
 
         return new NativeRegExp(patternString, flagString);
@@ -614,7 +629,7 @@ public final class NativeRegExp extends ScriptObject {
             return null;
         }
 
-        return new NativeRegExpExecResult(match);
+        return new NativeRegExpExecResult(match, globalObject);
     }
 
     /**
@@ -680,8 +695,13 @@ public final class NativeRegExp extends ScriptObject {
                 appendReplacement(matcher, string, replacement, sb);
             }
 
-            // ECMA 15.5.4.10 String.prototype.match(regexp)
             thisIndex = matcher.end();
+            if (thisIndex == string.length() && matcher.start() == matcher.end()) {
+                // Avoid getting empty match at end of string twice
+                break;
+            }
+
+            // ECMA 15.5.4.10 String.prototype.match(regexp)
             if (thisIndex == previousLastIndex) {
                 setLastIndex(thisIndex + 1);
                 previousLastIndex = thisIndex + 1;
@@ -866,7 +886,7 @@ public final class NativeRegExp extends ScriptObject {
      * @return last index property as int
      */
     public int getLastIndex() {
-        return JSType.toInt32(lastIndex);
+        return JSType.toInteger(lastIndex);
     }
 
     /**
@@ -883,12 +903,6 @@ public final class NativeRegExp extends ScriptObject {
      */
     public void setLastIndex(final int lastIndex) {
         this.lastIndex = JSType.toObject(lastIndex);
-    }
-
-    private void init() {
-        // Keep reference to global object to support "static" properties of RegExp
-        this.globalObject = Global.instance();
-        this.setProto(globalObject.getRegExpPrototype());
     }
 
     private static NativeRegExp checkRegExp(final Object self) {

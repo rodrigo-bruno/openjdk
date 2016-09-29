@@ -112,10 +112,6 @@ final class ClassString {
         this(type.parameterArray());
     }
 
-    Class<?>[] getClasses() {
-        return classes;
-    }
-
     @Override
     public boolean equals(Object other) {
         if(!(other instanceof ClassString)) {
@@ -155,8 +151,8 @@ final class ClassString {
     }
 
     List<MethodHandle> getMaximallySpecifics(List<MethodHandle> methods, LinkerServices linkerServices, boolean varArg) {
-        return MaximallySpecific.getMaximallySpecificMethods(getApplicables(methods, linkerServices, varArg), varArg,
-                classes, linkerServices);
+        return MaximallySpecific.getMaximallySpecificMethodHandles(getApplicables(methods, linkerServices, varArg),
+                varArg, classes, linkerServices);
     }
 
     /**

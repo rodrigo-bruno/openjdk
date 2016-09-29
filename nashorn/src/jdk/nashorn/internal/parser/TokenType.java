@@ -44,6 +44,7 @@ public enum TokenType {
     ERROR          (SPECIAL,  null),
     EOF            (SPECIAL,  null),
     EOL            (SPECIAL,  null),
+    COMMENT        (SPECIAL,  null),
 
     NOT            (UNARY,   "!",    14, false),
     NE             (BINARY,  "!=",    9, true),
@@ -93,7 +94,7 @@ public enum TokenType {
     ASSIGN_BIT_OR  (BINARY,  "|=",    2, false),
     OR             (BINARY,  "||",    4, true),
     RBRACE         (BRACKET, "}"),
-    BIT_NOT        (BINARY,  "~",    14, false),
+    BIT_NOT        (UNARY,   "~",     14, false),
 
     // ECMA 7.6.1.1 Keywords, 7.6.1.2 Future Reserved Words.
     // All other Java keywords are commented out.
@@ -177,7 +178,6 @@ public enum TokenType {
     ARRAY          (LITERAL,  null),
 
     COMMALEFT      (IR,       null),
-    CONVERT        (IR,       null),
     DISCARD        (IR,       null),
     DECPOSTFIX     (IR,       null),
     INCPOSTFIX     (IR,       null);
@@ -283,7 +283,7 @@ public enum TokenType {
 
     @Override
     public String toString() {
-        return name;
+        return getNameOrType();
     }
 
     static {

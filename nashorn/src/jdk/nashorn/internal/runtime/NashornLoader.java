@@ -38,55 +38,36 @@ import java.security.SecureClassLoader;
 import jdk.nashorn.tools.Shell;
 
 /**
- * Superclass for Nashorn class loader classes. This stores Context
- * instance as an instance field. The current context can be
- * efficiently accessed from a given Class via it's ClassLoader.
- *
+ * Superclass for Nashorn class loader classes.
  */
 abstract class NashornLoader extends SecureClassLoader {
-    private static final String OBJECTS_PKG = "jdk.nashorn.internal.objects";
-    private static final String RUNTIME_PKG = "jdk.nashorn.internal.runtime";
+    private static final String OBJECTS_PKG        = "jdk.nashorn.internal.objects";
+    private static final String RUNTIME_PKG        = "jdk.nashorn.internal.runtime";
+    private static final String RUNTIME_ARRAYS_PKG = "jdk.nashorn.internal.runtime.arrays";
     private static final String RUNTIME_LINKER_PKG = "jdk.nashorn.internal.runtime.linker";
-    private static final String SCRIPTS_PKG = "jdk.nashorn.internal.scripts";
+    private static final String SCRIPTS_PKG        = "jdk.nashorn.internal.scripts";
 
     private static final Permission[] SCRIPT_PERMISSIONS;
-    static {
-        SCRIPT_PERMISSIONS = new Permission[4];
 
+    static {
         /*
          * Generated classes get access to runtime, runtime.linker, objects, scripts packages.
          * Note that the actual scripts can not access these because Java.type, Packages
          * prevent these restricted packages. And Java reflection and JSR292 access is prevented
          * for scripts. In other words, nashorn generated portions of script classes can access
-         * clases in these implementation packages.
+         * classes in these implementation packages.
          */
-        SCRIPT_PERMISSIONS[0] = new RuntimePermission("accessClassInPackage." + RUNTIME_PKG);
-        SCRIPT_PERMISSIONS[1] = new RuntimePermission("accessClassInPackage." + RUNTIME_LINKER_PKG);
-        SCRIPT_PERMISSIONS[2] = new RuntimePermission("accessClassInPackage." + OBJECTS_PKG);
-        SCRIPT_PERMISSIONS[3] = new RuntimePermission("accessClassInPackage." + SCRIPTS_PKG);
+        SCRIPT_PERMISSIONS = new Permission[] {
+                new RuntimePermission("accessClassInPackage." + RUNTIME_PKG),
+                new RuntimePermission("accessClassInPackage." + RUNTIME_LINKER_PKG),
+                new RuntimePermission("accessClassInPackage." + OBJECTS_PKG),
+                new RuntimePermission("accessClassInPackage." + SCRIPTS_PKG),
+                new RuntimePermission("accessClassInPackage." + RUNTIME_ARRAYS_PKG)
+        };
     }
 
-    private final Context context;
-
-    final Context getContext() {
-        return context;
-    }
-
-    NashornLoader(final ClassLoader parent, final Context context) {
+    NashornLoader(final ClassLoader parent) {
         super(parent);
-        this.context = context;
-    }
-
-
-    /**
-     * Called by subclass after package access check is done
-     * @param name name of the class to be loaded
-     * @param resolve whether the class should be resolved or not
-     * @return Class object
-     * @throws ClassNotFoundException if class cannot be loaded
-     */
-    protected final Class<?> loadClassTrusted(final String name, final boolean resolve) throws ClassNotFoundException {
-        return super.loadClass(name, resolve);
     }
 
     protected static void checkPackageAccess(final String name) {
@@ -97,6 +78,7 @@ abstract class NashornLoader extends SecureClassLoader {
                 final String pkgName = name.substring(0, i);
                 switch (pkgName) {
                     case RUNTIME_PKG:
+                    case RUNTIME_ARRAYS_PKG:
                     case RUNTIME_LINKER_PKG:
                     case OBJECTS_PKG:
                     case SCRIPTS_PKG:

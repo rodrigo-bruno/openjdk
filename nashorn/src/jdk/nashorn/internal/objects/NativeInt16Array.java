@@ -42,6 +42,7 @@ import jdk.nashorn.internal.runtime.arrays.ArrayData;
 public final class NativeInt16Array extends ArrayBufferView {
 
     // initialized by nasgen
+    @SuppressWarnings("unused")
     private static PropertyMap $nasgenmap$;
 
     /**
@@ -108,6 +109,11 @@ public final class NativeInt16Array extends ArrayBufferView {
     }
 
     @Override
+    public String getClassName() {
+        return "Int16Array";
+    }
+
+    @Override
     protected Factory factory() {
         return FACTORY;
     }
@@ -150,7 +156,7 @@ public final class NativeInt16Array extends ArrayBufferView {
     }
 
     @Override
-    protected ScriptObject getPrototype() {
-        return Global.instance().getInt16ArrayPrototype();
+    protected ScriptObject getPrototype(final Global global) {
+        return global.getInt16ArrayPrototype();
     }
 }

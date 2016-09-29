@@ -25,91 +25,33 @@
 
 package jdk.nashorn.internal.runtime;
 
-import static jdk.nashorn.internal.codegen.Compiler.OBJECTS_PACKAGE;
 import static jdk.nashorn.internal.codegen.Compiler.SCRIPTS_PACKAGE;
 import static jdk.nashorn.internal.codegen.Compiler.binaryName;
 import static jdk.nashorn.internal.codegen.CompilerConstants.JS_OBJECT_PREFIX;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.security.AccessController;
-import java.security.CodeSigner;
-import java.security.CodeSource;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 import jdk.nashorn.internal.codegen.ObjectClassGenerator;
 
 /**
- * Responsible for on the fly construction of structure classes as well
- * as loading jdk.nashorn.internal.objects.* classes.
- *
+ * Responsible for on the fly construction of structure classes.
  */
 final class StructureLoader extends NashornLoader {
     private static final String JS_OBJECT_PREFIX_EXTERNAL = binaryName(SCRIPTS_PACKAGE) + '.' + JS_OBJECT_PREFIX.symbolName();
-    private static final String OBJECTS_PACKAGE_EXTERNAL  = binaryName(OBJECTS_PACKAGE);
 
     /**
      * Constructor.
      */
-    StructureLoader(final ClassLoader parent, final Context context) {
-        super(parent, context);
+    StructureLoader(final ClassLoader parent) {
+        super(parent);
     }
 
-    @Override
-    protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-        // check the cache first
-        final Class<?> loadedClass = findLoadedClass(name);
-        if (loadedClass != null) {
-            if (resolve) {
-                resolveClass(loadedClass);
-            }
-            return loadedClass;
-        }
-
-        if (name.startsWith(binaryName(OBJECTS_PACKAGE_EXTERNAL))) {
-            try {
-                return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-                    @Override
-                    public Class<?> run() throws ClassNotFoundException {
-                        final String      source  = name.replace('.','/') + ".clazz";
-                        final URL         url     = getResource(source);
-                        try (final InputStream is = getResourceAsStream(source)) {
-                            if (is == null) {
-                                throw new ClassNotFoundException(name);
-                            }
-
-                            byte[] code;
-                            try {
-                                code = Source.readBytes(is);
-                            } catch (final IOException e) {
-                                Context.printStackTrace(e);
-                                throw new ClassNotFoundException(name, e);
-                            }
-
-                            final Class<?> cl = defineClass(name, code, 0, code.length, new CodeSource(url, (CodeSigner[])null));
-                            if (resolve) {
-                                resolveClass(cl);
-                            }
-                            return cl;
-                        } catch (final IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } catch (final PrivilegedActionException  e) {
-                throw new ClassNotFoundException(name, e);
-            }
-        }
-
-        return super.loadClassTrusted(name, resolve);
+    static boolean isStructureClass(final String name) {
+        return name.startsWith(JS_OBJECT_PREFIX_EXTERNAL);
     }
-
 
     @Override
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        if (name.startsWith(JS_OBJECT_PREFIX_EXTERNAL)) {
+        if (isStructureClass(name)) {
             return generateClass(name, name.substring(JS_OBJECT_PREFIX_EXTERNAL.length()));
         }
         return super.findClass(name);
@@ -122,11 +64,7 @@ final class StructureLoader extends NashornLoader {
      * @return Generated class.
      */
     private Class<?> generateClass(final String name, final String descriptor) {
-        Context context = getContext();
-
-        if (context == null) {
-            context = Context.getContextTrusted();
-        }
+        final Context context = Context.getContextTrusted();
 
         final byte[] code = new ObjectClassGenerator(context).generate(descriptor);
         return defineClass(name, code, 0, code.length, new ProtectionDomain(null, getPermissions(null)));

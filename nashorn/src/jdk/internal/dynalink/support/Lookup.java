@@ -89,7 +89,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 /**
  * A wrapper around MethodHandles.Lookup that masks checked exceptions in those cases when you're looking up methods
@@ -122,6 +121,18 @@ public class Lookup {
      * @return the unreflected method handle.
      */
     public MethodHandle unreflect(Method m) {
+        return unreflect(lookup, m);
+    }
+
+    /**
+     * Performs a {@link java.lang.invoke.MethodHandles.Lookup#unreflect(Method)}, converting any encountered
+     * {@link IllegalAccessException} into an {@link IllegalAccessError}.
+     *
+     * @param lookup the lookup used to unreflect
+     * @param m the method to unreflect
+     * @return the unreflected method handle.
+     */
+    public static MethodHandle unreflect(MethodHandles.Lookup lookup, Method m) {
         try {
             return lookup.unreflect(m);
         } catch(IllegalAccessException e) {
@@ -130,7 +141,6 @@ public class Lookup {
             throw ee;
         }
     }
-
 
     /**
      * Performs a {@link java.lang.invoke.MethodHandles.Lookup#unreflectGetter(Field)}, converting any encountered
@@ -202,6 +212,18 @@ public class Lookup {
      * @return the unreflected constructor handle.
      */
     public MethodHandle unreflectConstructor(Constructor<?> c) {
+        return unreflectConstructor(lookup, c);
+    }
+
+    /**
+     * Performs a {@link java.lang.invoke.MethodHandles.Lookup#unreflectConstructor(Constructor)}, converting any
+     * encountered {@link IllegalAccessException} into an {@link IllegalAccessError}.
+     *
+     * @param lookup the lookup used to unreflect
+     * @param c the constructor to unreflect
+     * @return the unreflected constructor handle.
+     */
+    public static MethodHandle unreflectConstructor(MethodHandles.Lookup lookup, Constructor<?> c) {
         try {
             return lookup.unreflectConstructor(c);
         } catch(IllegalAccessException e) {
@@ -212,9 +234,8 @@ public class Lookup {
     }
 
     /**
-     * Performs a findSpecial on the underlying lookup, except for the backport where it rather uses unreflect. Converts
-     * any encountered {@link IllegalAccessException} into an {@link IllegalAccessError} and a
-     * {@link NoSuchMethodException} into a {@link NoSuchMethodError}.
+     * Performs a findSpecial on the underlying lookup. Converts any encountered {@link IllegalAccessException} into an
+     * {@link IllegalAccessError} and a {@link NoSuchMethodException} into a {@link NoSuchMethodError}.
      *
      * @param declaringClass class declaring the method
      * @param name the name of the method
@@ -225,13 +246,6 @@ public class Lookup {
      */
     public MethodHandle findSpecial(Class<?> declaringClass, String name, MethodType type) {
         try {
-            if(Backport.inUse) {
-                final Method m = declaringClass.getDeclaredMethod(name, type.parameterArray());
-                if(!Modifier.isPublic(declaringClass.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
-                    m.setAccessible(true);
-                }
-                return unreflect(m);
-            }
             return lookup.findSpecial(declaringClass, name, type, declaringClass);
         } catch(IllegalAccessException e) {
             final IllegalAccessError ee = new IllegalAccessError("Failed to access special method " + methodDescription(

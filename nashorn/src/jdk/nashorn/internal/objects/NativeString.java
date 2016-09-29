@@ -41,7 +41,7 @@ import java.util.Locale;
 import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
-import jdk.nashorn.internal.lookup.MethodHandleFactory;
+import jdk.nashorn.internal.lookup.MethodHandleFactory.LookupException;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Constructor;
 import jdk.nashorn.internal.objects.annotations.Function;
@@ -74,12 +74,20 @@ public final class NativeString extends ScriptObject {
     // initialized by nasgen
     private static PropertyMap $nasgenmap$;
 
-    NativeString(final CharSequence value) {
-        this(value, Global.instance().getStringPrototype());
+    static PropertyMap getInitialMap() {
+        return $nasgenmap$;
     }
 
-    private NativeString(final CharSequence value, final ScriptObject proto) {
-        super(proto, $nasgenmap$);
+    private NativeString(final CharSequence value) {
+        this(value, Global.instance());
+    }
+
+    NativeString(final CharSequence value, final Global global) {
+        this(value, global.getStringPrototype(), global.getStringMap());
+    }
+
+    private NativeString(final CharSequence value, final ScriptObject proto, final PropertyMap map) {
+        super(proto, map);
         assert value instanceof String || value instanceof ConsString;
         this.value = value;
     }
@@ -147,9 +155,9 @@ public final class NativeString extends ScriptObject {
 
         if (returnType == Object.class && (self instanceof String || self instanceof ConsString)) {
             try {
-                MethodHandle mh = MethodHandles.lookup().findStatic(NativeString.class, "get", desc.getMethodType());
+                MethodHandle mh = MH.findStatic(MethodHandles.lookup(), NativeString.class, "get", desc.getMethodType());
                 return new GuardedInvocation(mh, NashornGuards.getInstanceOf2Guard(String.class, ConsString.class));
-            } catch (final NoSuchMethodException | IllegalAccessException e) {
+            } catch (final LookupException e) {
                 // Shouldn't happen. Fall back to super
             }
         }
@@ -159,11 +167,12 @@ public final class NativeString extends ScriptObject {
     @SuppressWarnings("unused")
     private static Object get(final Object self, final Object key) {
         final CharSequence cs = JSType.toCharSequence(self);
-        final int index = ArrayIndex.getArrayIndex(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
         if (index >= 0 && index < cs.length()) {
             return String.valueOf(cs.charAt(index));
         }
-        return ((ScriptObject) Global.toObject(self)).get(key);
+        return ((ScriptObject) Global.toObject(self)).get(primitiveKey);
     }
 
     @SuppressWarnings("unused")
@@ -194,11 +203,12 @@ public final class NativeString extends ScriptObject {
     // String characters can be accessed with array-like indexing..
     @Override
     public Object get(final Object key) {
-        final int index = ArrayIndex.getArrayIndex(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
         if (index >= 0 && index < value.length()) {
             return String.valueOf(value.charAt(index));
         }
-        return super.get(key);
+        return super.get(primitiveKey);
     }
 
     @Override
@@ -287,8 +297,9 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean has(final Object key) {
-        final int index = ArrayIndex.getArrayIndex(key);
-        return isValid(index) || super.has(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
+        return isValid(index) || super.has(primitiveKey);
     }
 
     @Override
@@ -310,8 +321,9 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean hasOwnProperty(final Object key) {
-        final int index = ArrayIndex.getArrayIndex(key);
-        return isValid(index) || super.hasOwnProperty(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
+        return isValid(index) || super.hasOwnProperty(primitiveKey);
     }
 
     @Override
@@ -350,8 +362,9 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean delete(final Object key, final boolean strict) {
-        final int index = ArrayIndex.getArrayIndex(key);
-        return checkDeleteIndex(index, strict)? false : super.delete(key, strict);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
+        return checkDeleteIndex(index, strict)? false : super.delete(primitiveKey, strict);
     }
 
     private boolean checkDeleteIndex(final int index, final boolean strict) {
@@ -497,7 +510,7 @@ public final class NativeString extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static Object charAt(final Object self, final Object pos) {
-        return charAt(self, JSType.toInteger(pos));
+        return charAtImpl(checkObjectToString(self), JSType.toInteger(pos));
     }
 
     /**
@@ -519,7 +532,10 @@ public final class NativeString extends ScriptObject {
      */
     @SpecializedFunction
     public static String charAt(final Object self, final int pos) {
-        final String str = checkObjectToString(self);
+        return charAtImpl(checkObjectToString(self), pos);
+    }
+
+    private static String charAtImpl(final String str, final int pos) {
         return (pos < 0 || pos >= str.length()) ? "" : String.valueOf(str.charAt(pos));
     }
 
@@ -531,7 +547,7 @@ public final class NativeString extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static Object charCodeAt(final Object self, final Object pos) {
-        return charCodeAt(self, JSType.toInteger(pos));
+        return charCodeAtImpl(checkObjectToString(self), JSType.toInteger(pos));
     }
 
     /**
@@ -553,7 +569,10 @@ public final class NativeString extends ScriptObject {
      */
     @SpecializedFunction
     public static double charCodeAt(final Object self, final int pos) {
-        final String str = checkObjectToString(self);
+        return charCodeAtImpl(checkObjectToString(self), pos);
+    }
+
+    private static double charCodeAtImpl(final String str, final int pos) {
         return (pos < 0 || pos >= str.length()) ? Double.NaN :  str.charAt(pos);
     }
 
@@ -1050,9 +1069,8 @@ public final class NativeString extends ScriptObject {
     public static Object trim(final Object self) {
 
         final String str = checkObjectToString(self);
-        final int len = str.length();
         int start = 0;
-        int end   = len - 1;
+        int end   = str.length() - 1;
 
         while (start <= end && ScriptRuntime.isJSWhitespace(str.charAt(start))) {
             start++;
@@ -1061,14 +1079,49 @@ public final class NativeString extends ScriptObject {
             end--;
         }
 
-        return start == 0 && end + 1 == len ? str : str.substring(start, end + 1);
+        return str.substring(start, end + 1);
+    }
+
+    /**
+     * Nashorn extension: String.prototype.trimLeft ( )
+     * @param self self reference
+     * @return string trimmed left from whitespace
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object trimLeft(final Object self) {
+
+        final String str = checkObjectToString(self);
+        int start = 0;
+        int end   = str.length() - 1;
+
+        while (start <= end && ScriptRuntime.isJSWhitespace(str.charAt(start))) {
+            start++;
+        }
+
+        return str.substring(start, end + 1);
+    }
+
+    /**
+     * Nashorn extension: String.prototype.trimRight ( )
+     * @param self self reference
+     * @return string trimmed right from whitespace
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object trimRight(final Object self) {
+
+        final String str = checkObjectToString(self);
+        int start = 0;
+        int end   = str.length() - 1;
+
+        while (end >= start && ScriptRuntime.isJSWhitespace(str.charAt(end))) {
+            end--;
+        }
+
+        return str.substring(start, end + 1);
     }
 
     private static Object newObj(final Object self, final CharSequence str) {
-        if (self instanceof ScriptObject) {
-            return new NativeString(str, ((ScriptObject)self).getProto());
-        }
-        return new NativeString(str, Global.instance().getStringPrototype());
+        return new NativeString(str);
     }
 
     /**
@@ -1202,10 +1255,6 @@ public final class NativeString extends ScriptObject {
     }
 
     private static MethodHandle findWrapFilter() {
-        try {
-            return MethodHandles.lookup().findStatic(NativeString.class, "wrapFilter", MH.type(NativeString.class, Object.class));
-        } catch (final NoSuchMethodException | IllegalAccessException e) {
-            throw new MethodHandleFactory.LookupException(e);
-        }
+        return MH.findStatic(MethodHandles.lookup(), NativeString.class, "wrapFilter", MH.type(NativeString.class, Object.class));
     }
 }

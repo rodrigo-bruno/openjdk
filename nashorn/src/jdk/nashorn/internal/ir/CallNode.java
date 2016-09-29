@@ -27,7 +27,6 @@ package jdk.nashorn.internal.ir;
 
 import java.util.Collections;
 import java.util.List;
-
 import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Ignore;
 import jdk.nashorn.internal.ir.annotations.Immutable;
@@ -37,27 +36,27 @@ import jdk.nashorn.internal.ir.visitor.NodeVisitor;
  * IR representation for a function call.
  */
 @Immutable
-public final class CallNode extends LexicalContextNode implements TypeOverride<CallNode> {
-
-    private final Type type;
+public final class CallNode extends LexicalContextExpression {
 
     /** Function identifier or function body. */
-    private final Node function;
+    private final Expression function;
 
     /** Call arguments. */
-    private final List<Node> args;
+    private final List<Expression> args;
 
     /** Is this a "new" operation */
     public static final int IS_NEW        = 0x1;
 
     private final int flags;
 
+    private final int lineNumber;
+
     /**
      * Arguments to be passed to builtin {@code eval} function
      */
     public static class EvalArgs {
         /** evaluated code */
-        private final Node code;
+        private final Expression code;
 
         /** 'this' passed to evaluated code */
         private final IdentNode evalThis;
@@ -76,7 +75,7 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
          * @param location   location for the eval call
          * @param strictMode is this a call from a strict context?
          */
-        public EvalArgs(final Node code, final IdentNode evalThis, final String location, final boolean strictMode) {
+        public EvalArgs(final Expression code, final IdentNode evalThis, final String location, final boolean strictMode) {
             this.code = code;
             this.evalThis = evalThis;
             this.location = location;
@@ -87,11 +86,11 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
          * Return the code that is to be eval:ed by this eval function
          * @return code as an AST node
          */
-        public Node getCode() {
+        public Expression getCode() {
             return code;
         }
 
-        private EvalArgs setCode(final Node code) {
+        private EvalArgs setCode(final Expression code) {
             if (this.code == code) {
                 return this;
             }
@@ -143,48 +142,36 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
      * @param function   the function to call
      * @param args       args to the call
      */
-    public CallNode(final int lineNumber, final long token, final int finish, final Node function, final List<Node> args) {
-        super(lineNumber, token, finish);
+    public CallNode(final int lineNumber, final long token, final int finish, final Expression function, final List<Expression> args) {
+        super(token, finish);
 
-        this.function = function;
-        this.args     = args;
-        this.flags    = 0;
-        this.type     = null;
-        this.evalArgs = null;
+        this.function   = function;
+        this.args       = args;
+        this.flags      = 0;
+        this.evalArgs   = null;
+        this.lineNumber = lineNumber;
     }
 
-    private CallNode(final CallNode callNode, final Node function, final List<Node> args, final int flags, final Type type, final EvalArgs evalArgs) {
+    private CallNode(final CallNode callNode, final Expression function, final List<Expression> args, final int flags, final EvalArgs evalArgs) {
         super(callNode);
+        this.lineNumber = callNode.lineNumber;
         this.function = function;
         this.args = args;
         this.flags = flags;
-        this.type = type;
         this.evalArgs = evalArgs;
+    }
+
+    /**
+     * Returns the line number.
+     * @return the line number.
+     */
+    public int getLineNumber() {
+        return lineNumber;
     }
 
     @Override
     public Type getType() {
-        if (hasCallSiteType()) {
-            return type;
-        }
         return function instanceof FunctionNode ? ((FunctionNode)function).getReturnType() : Type.OBJECT;
-    }
-
-    @Override
-    public CallNode setType(final TemporarySymbols ts, final LexicalContext lc, final Type type) {
-        if (this.type == type) {
-            return this;
-        }
-        return new CallNode(this, function, args, flags, type, evalArgs);
-    }
-
-    private boolean hasCallSiteType() {
-        return this.type != null;
-    }
-
-    @Override
-    public boolean canHaveCallSiteType() {
-        return true;
     }
 
     /**
@@ -198,13 +185,12 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
     public Node accept(final LexicalContext lc, final NodeVisitor<? extends LexicalContext> visitor) {
         if (visitor.enterCallNode(this)) {
             final CallNode newCallNode = (CallNode)visitor.leaveCallNode(
-                    setFunction(function.accept(visitor)).
-                    setArgs(Node.accept(visitor, Node.class, args)).
+                    setFunction((Expression)function.accept(visitor)).
+                    setArgs(Node.accept(visitor, Expression.class, args)).
                     setFlags(flags).
-                    setType(null, lc, type).
                     setEvalArgs(evalArgs == null ?
                             null :
-                            evalArgs.setCode(evalArgs.getCode().accept(visitor)).
+                            evalArgs.setCode((Expression)evalArgs.getCode().accept(visitor)).
                                 setThis((IdentNode)evalArgs.getThis().accept(visitor))));
             // Theoretically, we'd need to instead pass lc to every setter and do a replacement on each. In practice,
             // setType from TypeOverride can't accept a lc, and we don't necessarily want to go there now.
@@ -218,13 +204,6 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
 
     @Override
     public void toString(final StringBuilder sb) {
-        if (hasCallSiteType()) {
-            sb.append('{');
-            final String desc = getType().getDescriptor();
-            sb.append(desc.charAt(desc.length() - 1) == ';' ? 'O' : getType().getDescriptor());
-            sb.append('}');
-        }
-
         function.toString(sb);
 
         sb.append('(');
@@ -248,7 +227,7 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
      * Get the arguments for the call
      * @return a list of arguments
      */
-    public List<Node> getArgs() {
+    public List<Expression> getArgs() {
         return Collections.unmodifiableList(args);
     }
 
@@ -256,11 +235,11 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
      * Reset the arguments for the call
      * @param args new arguments list
      */
-    private CallNode setArgs(final List<Node> args) {
+    private CallNode setArgs(final List<Expression> args) {
         if (this.args == args) {
             return this;
         }
-        return new CallNode(this, function, args, flags, type, evalArgs);
+        return new CallNode(this, function, args, flags, evalArgs);
     }
 
     /**
@@ -282,7 +261,7 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
         if (this.evalArgs == evalArgs) {
             return this;
         }
-        return new CallNode(this, function, args, flags, type, evalArgs);
+        return new CallNode(this, function, args, flags, evalArgs);
     }
 
     /**
@@ -297,7 +276,7 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
      * Return the function expression that this call invokes
      * @return the function
      */
-    public Node getFunction() {
+    public Expression getFunction() {
         return function;
     }
 
@@ -306,11 +285,11 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
      * @param function the function
      * @return same node or new one on state change
      */
-    public CallNode setFunction(final Node function) {
+    public CallNode setFunction(final Expression function) {
         if (this.function == function) {
             return this;
         }
-        return new CallNode(this, function, args, flags, type, evalArgs);
+        return new CallNode(this, function, args, flags, evalArgs);
     }
 
     /**
@@ -333,6 +312,6 @@ public final class CallNode extends LexicalContextNode implements TypeOverride<C
         if (this.flags == flags) {
             return this;
         }
-        return new CallNode(this, function, args, flags, type, evalArgs);
+        return new CallNode(this, function, args, flags, evalArgs);
     }
 }

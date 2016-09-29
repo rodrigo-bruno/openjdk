@@ -47,10 +47,13 @@ final class ObjectArrayData extends ArrayData {
      */
     ObjectArrayData(final Object array[], final int length) {
         super(length);
+        assert array.length >= length;
         this.array  = array;
-        if (array.length > length) {
-            Arrays.fill(array, length, array.length, ScriptRuntime.UNDEFINED);
-        }
+    }
+
+    @Override
+    public ArrayData copy() {
+        return new ObjectArrayData(array.clone(), (int) length());
     }
 
     @Override
@@ -109,9 +112,6 @@ final class ObjectArrayData extends ArrayData {
 
     @Override
     public ArrayData set(final int index, final Object value, final boolean strict) {
-        if (value == ScriptRuntime.UNDEFINED) {
-            return new UndefinedArrayFilter(this).set(index, value, strict);
-        }
         array[index] = value;
         setLength(Math.max(index + 1, length()));
         return this;
@@ -146,7 +146,7 @@ final class ObjectArrayData extends ArrayData {
 
     @Override
     public ArrayData setEmpty(final long lo, final long hi) {
-        Arrays.fill(array, (int)Math.max(lo, 0L), (int)Math.min(hi, (long)Integer.MAX_VALUE), ScriptRuntime.EMPTY);
+        Arrays.fill(array, (int)Math.max(lo, 0L), (int)Math.min(hi, Integer.MAX_VALUE), ScriptRuntime.EMPTY);
         return this;
     }
 
@@ -205,5 +205,33 @@ final class ObjectArrayData extends ArrayData {
         final long start     = from < 0 ? (from + length()) : from;
         final long newLength = to - start;
         return new ObjectArrayData(Arrays.copyOfRange(array, (int)from, (int)to), (int)newLength);
+    }
+
+    @Override
+    public ArrayData fastSplice(final int start, final int removed, final int added) throws UnsupportedOperationException {
+        final long oldLength = length();
+        final long newLength = oldLength - removed + added;
+        if (newLength > SparseArrayData.MAX_DENSE_LENGTH && newLength > array.length) {
+            throw new UnsupportedOperationException();
+        }
+        final ArrayData returnValue = (removed == 0) ?
+                EMPTY_ARRAY : new ObjectArrayData(Arrays.copyOfRange(array, start, start + removed), removed);
+
+        if (newLength != oldLength) {
+            final Object[] newArray;
+
+            if (newLength > array.length) {
+                newArray = new Object[ArrayData.nextSize((int)newLength)];
+                System.arraycopy(array, 0, newArray, 0, start);
+            } else {
+                newArray = array;
+            }
+
+            System.arraycopy(array, start + removed, newArray, start + added, (int)(oldLength - start - removed));
+            array = newArray;
+            setLength(newLength);
+        }
+
+        return returnValue;
     }
 }

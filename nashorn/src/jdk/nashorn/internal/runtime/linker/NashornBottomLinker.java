@@ -30,13 +30,21 @@ import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 import static jdk.nashorn.internal.lookup.Lookup.MH;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Map;
+import java.util.HashMap;
 import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.beans.BeansLinker;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.GuardingDynamicLinker;
+import jdk.internal.dynalink.linker.GuardingTypeConverterFactory;
 import jdk.internal.dynalink.linker.LinkRequest;
 import jdk.internal.dynalink.linker.LinkerServices;
 import jdk.internal.dynalink.support.Guards;
+import jdk.nashorn.internal.runtime.Context;
+import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
 
 /**
@@ -46,7 +54,7 @@ import jdk.nashorn.internal.runtime.ScriptRuntime;
  * setters for Java objects that couldn't be linked by any other linker, and throw appropriate ECMAScript errors for
  * attempts to invoke arbitrary Java objects as functions or constructors.
  */
-final class NashornBottomLinker implements GuardingDynamicLinker {
+final class NashornBottomLinker implements GuardingDynamicLinker, GuardingTypeConverterFactory {
 
     @Override
     public GuardedInvocation getGuardedInvocation(final LinkRequest linkRequest, final LinkerServices linkerServices)
@@ -73,7 +81,7 @@ final class NashornBottomLinker implements GuardingDynamicLinker {
     private static final MethodHandle EMPTY_ELEM_SETTER =
             MH.dropArguments(EMPTY_PROP_SETTER, 0, Object.class);
 
-    private static GuardedInvocation linkBean(final LinkRequest linkRequest, final LinkerServices linkerServices) {
+    private static GuardedInvocation linkBean(final LinkRequest linkRequest, final LinkerServices linkerServices) throws Exception {
         final NashornCallSiteDescriptor desc = (NashornCallSiteDescriptor)linkRequest.getCallSiteDescriptor();
         final Object self = linkRequest.getReceiver();
         final String operator = desc.getFirstOperator();
@@ -84,6 +92,22 @@ final class NashornBottomLinker implements GuardingDynamicLinker {
             }
             throw typeError("not.a.function", ScriptRuntime.safeToString(self));
         case "call":
+            // Support dyn:call on any object that supports some @FunctionalInterface
+            // annotated interface. This way Java method, constructor references or
+            // implementations of java.util.function.* interfaces can be called as though
+            // those are script functions.
+            final Method m = getFunctionalInterfaceMethod(self.getClass());
+            if (m != null) {
+                final MethodType callType = desc.getMethodType();
+                // 'callee' and 'thiz' passed from script + actual arguments
+                if (callType.parameterCount() != m.getParameterCount() + 2) {
+                    throw typeError("no.method.matches.args", ScriptRuntime.safeToString(self));
+                }
+                return new GuardedInvocation(
+                        // drop 'thiz' passed from the script.
+                        MH.dropArguments(desc.getLookup().unreflect(m), 1, callType.parameterType(1)),
+                        Guards.getInstanceOfGuard(m.getDeclaringClass())).asType(callType);
+            }
             if(BeansLinker.isDynamicMethod(self)) {
                 throw typeError("no.method.matches.args", ScriptRuntime.safeToString(self));
             }
@@ -107,6 +131,29 @@ final class NashornBottomLinker implements GuardingDynamicLinker {
             break;
         }
         throw new AssertionError("unknown call type " + desc);
+    }
+
+    @Override
+    public GuardedInvocation convertToType(final Class<?> sourceType, final Class<?> targetType) throws Exception {
+        final GuardedInvocation gi = convertToTypeNoCast(sourceType, targetType);
+        return gi == null ? null : gi.asType(MH.type(targetType, sourceType));
+    }
+
+    /**
+     * Main part of the implementation of {@link GuardingTypeConverterFactory#convertToType(Class, Class)} that doesn't
+     * care about adapting the method signature; that's done by the invoking method. Returns conversion from Object to String/number/boolean (JS primitive types).
+     * @param sourceType the source type
+     * @param targetType the target type
+     * @return a guarded invocation that converts from the source type to the target type.
+     * @throws Exception if something goes wrong
+     */
+    private static GuardedInvocation convertToTypeNoCast(final Class<?> sourceType, final Class<?> targetType) throws Exception {
+        final MethodHandle mh = CONVERTERS.get(targetType);
+        if (mh != null) {
+            return new GuardedInvocation(mh, null);
+        }
+
+        return null;
     }
 
     private static GuardedInvocation getInvocation(final MethodHandle handle, final Object self, final LinkerServices linkerServices, final CallSiteDescriptor desc) {
@@ -141,11 +188,60 @@ final class NashornBottomLinker implements GuardingDynamicLinker {
         throw new AssertionError("unknown call type " + desc);
     }
 
+    private static final Map<Class<?>, MethodHandle> CONVERTERS = new HashMap<>();
+    static {
+        CONVERTERS.put(boolean.class, JSType.TO_BOOLEAN.methodHandle());
+        CONVERTERS.put(double.class, JSType.TO_NUMBER.methodHandle());
+        CONVERTERS.put(int.class, JSType.TO_INTEGER.methodHandle());
+        CONVERTERS.put(long.class, JSType.TO_LONG.methodHandle());
+        CONVERTERS.put(String.class, JSType.TO_STRING.methodHandle());
+    }
+
     private static String getArgument(final LinkRequest linkRequest) {
         final CallSiteDescriptor desc = linkRequest.getCallSiteDescriptor();
         if (desc.getNameTokenCount() > 2) {
             return desc.getNameToken(2);
         }
         return ScriptRuntime.safeToString(linkRequest.getArguments()[1]);
+    }
+
+    // cache of @FunctionalInterface method of implementor classes
+    private static final ClassValue<Method> FUNCTIONAL_IFACE_METHOD = new ClassValue<Method>() {
+        @Override
+        protected Method computeValue(final Class<?> type) {
+            return findFunctionalInterfaceMethod(type);
+        }
+
+        private Method findFunctionalInterfaceMethod(final Class<?> clazz) {
+            if (clazz == null) {
+                return null;
+            }
+
+            for (Class<?> iface : clazz.getInterfaces()) {
+                // check accessiblity up-front
+                if (! Context.isAccessibleClass(iface)) {
+                    continue;
+                }
+
+                // check for @FunctionalInterface
+                if (iface.isAnnotationPresent(FunctionalInterface.class)) {
+                    // return the first abstract method
+                    for (final Method m : iface.getMethods()) {
+                        if (Modifier.isAbstract(m.getModifiers())) {
+                            return m;
+                        }
+                    }
+                }
+            }
+
+            // did not find here, try super class
+            return findFunctionalInterfaceMethod(clazz.getSuperclass());
+        }
+    };
+
+    // Returns @FunctionalInterface annotated interface's single abstract
+    // method. If not found, returns null.
+    static Method getFunctionalInterfaceMethod(final Class<?> clazz) {
+        return FUNCTIONAL_IFACE_METHOD.get(clazz);
     }
 }

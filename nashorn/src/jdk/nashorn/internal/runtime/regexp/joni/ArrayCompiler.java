@@ -39,7 +39,6 @@ import jdk.nashorn.internal.runtime.regexp.joni.constants.NodeType;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.OPCode;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.OPSize;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.TargetInfo;
-import jdk.nashorn.internal.runtime.regexp.joni.encoding.CharacterType;
 
 final class ArrayCompiler extends Compiler {
     private int[] code;
@@ -100,12 +99,7 @@ final class ArrayCompiler extends Compiler {
     }
 
     private boolean isNeedStrLenOpExact(int op) {
-        return  op == OPCode.EXACTN         ||
-                op == OPCode.EXACTMB2N      ||
-                op == OPCode.EXACTMB3N      ||
-                op == OPCode.EXACTMBN       ||
-                op == OPCode.EXACTN_IC      ||
-                op == OPCode.EXACTN_IC_SB;
+        return  op == OPCode.EXACTN || op == OPCode.EXACTN_IC;
     }
 
     private boolean opTemplated(int op) {
@@ -172,7 +166,6 @@ final class ArrayCompiler extends Compiler {
             if (isNeedStrLenOpExact(op)) len += OPSize.LENGTH;
             len += strLength;
         }
-        if (op == OPCode.EXACTMBN) len += OPSize.LENGTH;
         return len;
     }
 
@@ -180,8 +173,6 @@ final class ArrayCompiler extends Compiler {
     protected final void addCompileString(char[] chars, int p, int strLength, boolean ignoreCase) {
         int op = selectStrOpcode(strLength, ignoreCase);
         addOpcode(op);
-
-        if (op == OPCode.EXACTMBN) addLength(1);
 
         if (isNeedStrLenOpExact(op)) {
             addLength(strLength);
@@ -294,35 +285,22 @@ final class ArrayCompiler extends Compiler {
 
     @Override
     protected void compileBackrefNode(BackRefNode node) {
-        BackRefNode br = node;
-        // USE_BACKREF_AT_LEVEL
-        if (br.backNum == 1) {
-            if (isIgnoreCase(regex.options)) {
-                addOpcode(OPCode.BACKREFN_IC);
-                addMemNum(br.back[0]);
-            } else {
-                switch (br.back[0]) {
-                    case 1:
-                        addOpcode(OPCode.BACKREF1);
-                        break;
-                    case 2:
-                        addOpcode(OPCode.BACKREF2);
-                        break;
-                    default:
-                        addOpcode(OPCode.BACKREFN);
-                        addOpcode(br.back[0]);
-                        break;
-                } // switch
-            }
+        if (isIgnoreCase(regex.options)) {
+            addOpcode(OPCode.BACKREFN_IC);
+            addMemNum(node.backRef);
         } else {
-            if (isIgnoreCase(regex.options)) {
-                addOpcode(OPCode.BACKREF_MULTI_IC);
-            } else {
-                addOpcode(OPCode.BACKREF_MULTI);
-            }
-            // !add_bacref_mems:!
-            addLength(br.backNum);
-            for (int i=br.backNum-1; i>=0; i--) addMemNum(br.back[i]);
+            switch (node.backRef) {
+                case 1:
+                    addOpcode(OPCode.BACKREF1);
+                    break;
+                case 2:
+                    addOpcode(OPCode.BACKREF2);
+                    break;
+                default:
+                    addOpcode(OPCode.BACKREFN);
+                    addOpcode(node.backRef);
+                    break;
+            } // switch
         }
     }
 
@@ -366,6 +344,7 @@ final class ArrayCompiler extends Compiler {
 
     private static final int QUANTIFIER_EXPAND_LIMIT_SIZE   = 50; // was 50
 
+    @SuppressWarnings("unused")
     private static boolean cknOn(int ckn) {
         return ckn > 0;
     }
@@ -791,13 +770,8 @@ final class ArrayCompiler extends Compiler {
         case NodeType.BREF:
             BackRefNode br = (BackRefNode)node;
 
-            // USE_BACKREF_AT_LEVEL
-            if (br.backNum == 1) {
-                len = ((!isIgnoreCase(regex.options) && br.back[0] <= 2)
-                        ? OPSize.OPCODE : (OPSize.OPCODE + OPSize.MEMNUM));
-            } else {
-                len = OPSize.OPCODE + OPSize.LENGTH + (OPSize.MEMNUM * br.backNum);
-            }
+            len = ((!isIgnoreCase(regex.options) && br.backRef <= 2)
+                    ? OPSize.OPCODE : (OPSize.OPCODE + OPSize.MEMNUM));
             break;
 
         case NodeType.QTFR:
@@ -873,15 +847,10 @@ final class ArrayCompiler extends Compiler {
 
         switch(opcode) {
         case OPCode.ANYCHAR_STAR:
-        case OPCode.ANYCHAR_STAR_SB:
         case OPCode.ANYCHAR_ML_STAR:
-        case OPCode.ANYCHAR_ML_STAR_SB:
         case OPCode.ANYCHAR_STAR_PEEK_NEXT:
-        case OPCode.ANYCHAR_STAR_PEEK_NEXT_SB:
         case OPCode.ANYCHAR_ML_STAR_PEEK_NEXT:
-        case OPCode.ANYCHAR_ML_STAR_PEEK_NEXT_SB:
         case OPCode.STATE_CHECK_ANYCHAR_STAR:
-        case OPCode.STATE_CHECK_ANYCHAR_STAR_SB:
         case OPCode.STATE_CHECK_ANYCHAR_ML_STAR:
         case OPCode.MEMORY_START_PUSH:
         case OPCode.MEMORY_END_PUSH:
@@ -910,6 +879,7 @@ final class ArrayCompiler extends Compiler {
         }
     }
 
+    @SuppressWarnings("unused")
     private void addStateCheckNum(int num) {
         addInt(num);
     }
@@ -918,6 +888,7 @@ final class ArrayCompiler extends Compiler {
         addInt(addr);
     }
 
+    @SuppressWarnings("unused")
     private void addAbsAddr(int addr) {
         addInt(addr);
     }

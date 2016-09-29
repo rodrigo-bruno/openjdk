@@ -36,6 +36,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import org.testng.TestNG;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -47,7 +48,7 @@ import org.testng.annotations.Test;
 public class MethodAccessTest {
 
     private static ScriptEngine e = null;
-    private static SharedObject o = new SharedObject();
+    private static SharedObject o = null;
 
     public static void main(final String[] args) {
         TestNG.main(args);
@@ -57,10 +58,17 @@ public class MethodAccessTest {
     public static void setUpClass() throws ScriptException {
         final ScriptEngineManager m = new ScriptEngineManager();
         e = m.getEngineByName("nashorn");
+        o = new SharedObject();
         o.setEngine(e);
         e.put("o", o);
         e.eval("var SharedObject = Packages.jdk.nashorn.api.javaaccess.SharedObject;");
         e.eval("var Person = Packages.jdk.nashorn.api.javaaccess.Person;");
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        e = null;
+        o = null;
     }
 
     @Test
@@ -404,7 +412,7 @@ public class MethodAccessTest {
 
     @Test
     public void accessMethodMixedWithEllipsis() throws ScriptException {
-        assertArrayEquals(new Object[] { "Hello", 10, true, -100500, 80 }, (Object[])e.eval("o.methodMixedWithEllipsis('Hello', 10, true, -100500,80.0);"));
+        assertArrayEquals(new Object[] { "Hello", 10, true, -100500, 80d }, (Object[])e.eval("o.methodMixedWithEllipsis('Hello', 10, true, -100500,80.0);"));
         assertArrayEquals(new Object[] { "Nashorn", 15 }, (Object[])e.eval("o.methodMixedWithEllipsis('Nashorn',15);"));
     }
 
@@ -423,8 +431,8 @@ public class MethodAccessTest {
 
     @Test
     public void accessMethodDoubleVSintOverloaded() throws ScriptException {
-        assertEquals("int", e.eval("o.overloadedMethodDoubleVSint(0.0);"));
-        assertEquals("int", e.eval("o.overloadedMethodDoubleVSint(1000.0);"));
+        assertEquals("double", e.eval("o.overloadedMethodDoubleVSint(0.0);"));
+        assertEquals("double", e.eval("o.overloadedMethodDoubleVSint(1000.0);"));
         assertEquals("double", e.eval("o.overloadedMethodDoubleVSint(0.01);"));
         assertEquals("double", e.eval("o.overloadedMethodDoubleVSint(100.02);"));
         assertEquals("int", e.eval("o.overloadedMethodDoubleVSint(0);"));

@@ -59,6 +59,9 @@ public abstract class ScriptFunction extends ScriptObject {
     /** Method handle for name getter for this ScriptFunction */
     public static final MethodHandle G$NAME = findOwnMH("G$name", Object.class, Object.class);
 
+    /** Method handle used for implementing sync() in mozilla_compat */
+    public static final MethodHandle INVOKE_SYNC = findOwnMH("invokeSync", Object.class, ScriptFunction.class, Object.class, Object.class, Object[].class);
+
     /** Method handle for allocate function for this ScriptFunction */
     static final MethodHandle ALLOCATE = findOwnMH("allocate", Object.class);
 
@@ -70,6 +73,8 @@ public abstract class ScriptFunction extends ScriptObject {
     private static final MethodHandle IS_FUNCTION_MH  = findOwnMH("isFunctionMH", boolean.class, Object.class, ScriptFunctionData.class);
 
     private static final MethodHandle IS_NONSTRICT_FUNCTION = findOwnMH("isNonStrictFunction", boolean.class, Object.class, Object.class, ScriptFunctionData.class);
+
+    private static final MethodHandle ADD_ZEROTH_ELEMENT = findOwnMH("addZerothElement", Object[].class, Object[].class, Object.class);
 
     /** The parent scope. */
     private final ScriptObject scope;
@@ -299,6 +304,14 @@ public abstract class ScriptFunction extends ScriptObject {
     public abstract void setPrototype(Object prototype);
 
     /**
+     * Create a function that invokes this function synchronized on {@code sync} or the self object
+     * of the invocation.
+     * @param sync the Object to synchronize on, or undefined
+     * @return synchronized function
+     */
+    public abstract ScriptFunction makeSynchronizedFunction(Object sync);
+
+    /**
      * Return the most appropriate invoke handle if there are specializations
      * @param type most specific method type to look for invocation with
      * @param args args for trampoline invocation
@@ -324,7 +337,7 @@ public abstract class ScriptFunction extends ScriptObject {
      * @param self self reference
      * @return bound invoke handle
      */
-    public final MethodHandle getBoundInvokeHandle(final ScriptObject self) {
+    public final MethodHandle getBoundInvokeHandle(final Object self) {
         return MH.bindTo(bindToCalleeIfNeeded(data.getGenericInvoker()), self);
     }
 
@@ -494,32 +507,24 @@ public abstract class ScriptFunction extends ScriptObject {
         MethodHandle boundHandle;
         MethodHandle guard = null;
 
+        final boolean scopeCall = NashornCallSiteDescriptor.isScope(desc);
+
         if (data.needsCallee()) {
             final MethodHandle callHandle = getBestInvoker(type, request.getArguments());
-            if (NashornCallSiteDescriptor.isScope(desc)) {
+            if (scopeCall) {
                 // Make a handle that drops the passed "this" argument and substitutes either Global or Undefined
                 // (callee, this, args...) => (callee, args...)
                 boundHandle = MH.insertArguments(callHandle, 1, needsWrappedThis() ? Context.getGlobalTrusted() : ScriptRuntime.UNDEFINED);
                 // (callee, args...) => (callee, [this], args...)
                 boundHandle = MH.dropArguments(boundHandle, 1, Object.class);
+
             } else {
                 // It's already (callee, this, args...), just what we need
                 boundHandle = callHandle;
-
-                // For non-strict functions, check whether this-object is primitive type.
-                // If so add a to-object-wrapper argument filter.
-                // Else install a guard that will trigger a relink when the argument becomes primitive.
-                if (needsWrappedThis()) {
-                    if (ScriptFunctionData.isPrimitiveThis(request.getArguments()[1])) {
-                        boundHandle = MH.filterArguments(boundHandle, 1, WRAPFILTER);
-                    } else {
-                        guard = getNonStrictFunctionGuard(this);
-                    }
-                }
             }
         } else {
             final MethodHandle callHandle = getBestInvoker(type.dropParameterTypes(0, 1), request.getArguments());
-            if (NashornCallSiteDescriptor.isScope(desc)) {
+            if (scopeCall) {
                 // Make a handle that drops the passed "this" argument and substitutes either Global or Undefined
                 // (this, args...) => (args...)
                 boundHandle = MH.bindTo(callHandle, needsWrappedThis() ? Context.getGlobalTrusted() : ScriptRuntime.UNDEFINED);
@@ -528,6 +533,17 @@ public abstract class ScriptFunction extends ScriptObject {
             } else {
                 // (this, args...) => ([callee], this, args...)
                 boundHandle = MH.dropArguments(callHandle, 0, Object.class);
+            }
+        }
+
+        // For non-strict functions, check whether this-object is primitive type.
+        // If so add a to-object-wrapper argument filter.
+        // Else install a guard that will trigger a relink when the argument becomes primitive.
+        if (!scopeCall && needsWrappedThis()) {
+            if (ScriptFunctionData.isPrimitiveThis(request.getArguments()[1])) {
+                boundHandle = MH.filterArguments(boundHandle, 1, WRAPFILTER);
+            } else {
+                guard = getNonStrictFunctionGuard(this);
             }
         }
 
@@ -546,7 +562,20 @@ public abstract class ScriptFunction extends ScriptObject {
     }
 
     private static MethodHandle bindToNameIfNeeded(final MethodHandle methodHandle, final String bindName) {
-        return bindName == null ? methodHandle : MH.insertArguments(methodHandle, 1, bindName);
+        if (bindName == null) {
+            return methodHandle;
+        }
+
+        // if it is vararg method, we need to extend argument array with
+        // a new zeroth element that is set to bindName value.
+        final MethodType methodType = methodHandle.type();
+        final int parameterCount = methodType.parameterCount();
+        final boolean isVarArg = parameterCount > 0 && methodType.parameterType(parameterCount - 1).isArray();
+
+        if (isVarArg) {
+            return MH.filterArguments(methodHandle, 1, MH.insertArguments(ADD_ZEROTH_ELEMENT, 1, bindName));
+        }
+        return MH.insertArguments(methodHandle, 1, bindName);
     }
 
     /**
@@ -584,6 +613,25 @@ public abstract class ScriptFunction extends ScriptObject {
     @SuppressWarnings("unused")
     private static boolean isNonStrictFunction(final Object self, final Object arg, final ScriptFunctionData data) {
         return self instanceof ScriptFunction && ((ScriptFunction)self).data == data && arg instanceof ScriptObject;
+    }
+
+    @SuppressWarnings("unused")
+    private static Object[] addZerothElement(final Object[] args, final Object value) {
+        // extends input array with by adding new zeroth element
+        final Object[] src = (args == null)? ScriptRuntime.EMPTY_ARRAY : args;
+        final Object[] result = new Object[src.length + 1];
+        System.arraycopy(src, 0, result, 1, src.length);
+        result[0] = value;
+        return result;
+    }
+
+    @SuppressWarnings("unused")
+    private static Object invokeSync(final ScriptFunction func, final Object sync, final Object self, final Object... args)
+            throws Throwable {
+        final Object syncObj = sync == UNDEFINED ? self : sync;
+        synchronized (syncObj) {
+            return func.invoke(self, args);
+        }
     }
 
     private static MethodHandle findOwnMH(final String name, final Class<?> rtype, final Class<?>... types) {

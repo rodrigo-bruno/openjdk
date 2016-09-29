@@ -32,6 +32,7 @@ import java.util.WeakHashMap;
  * Helper class to manage property listeners and notification.
  */
 public class PropertyListenerManager implements PropertyListener {
+    PropertyListenerManager() {}
 
     /** property listeners for this object. */
     private Map<PropertyListener,Boolean> listeners;
@@ -41,6 +42,7 @@ public class PropertyListenerManager implements PropertyListener {
     private static int listenersRemoved;
 
     /**
+     * Return aggregate listeners added to all PropertyListenerManagers
      * @return the listenersAdded
      */
     public static int getListenersAdded() {
@@ -48,10 +50,19 @@ public class PropertyListenerManager implements PropertyListener {
     }
 
     /**
+     * Return aggregate listeners removed from all PropertyListenerManagers
      * @return the listenersRemoved
      */
     public static int getListenersRemoved() {
         return listenersRemoved;
+    }
+
+    /**
+     * Return listeners added to this PropertyListenerManager.
+     * @return the listener count
+     */
+    public final int getListenerCount() {
+        return listeners != null? listeners.size() : 0;
     }
 
     // Property listener management methods
@@ -129,6 +140,21 @@ public class PropertyListenerManager implements PropertyListener {
         }
     }
 
+    /**
+     * This method can be called to notify __proto__ modification to this object's listeners.
+     *
+     * @param object The ScriptObject whose __proto__ was changed.
+     * @param oldProto old __proto__
+     * @param newProto new __proto__
+     */
+    protected synchronized final void notifyProtoChanged(final ScriptObject object, final ScriptObject oldProto, final ScriptObject newProto) {
+        if (listeners != null) {
+            for (PropertyListener listener : listeners.keySet()) {
+                listener.protoChanged(object, oldProto, newProto);
+            }
+        }
+    }
+
     // PropertyListener methods
 
     @Override
@@ -144,5 +170,10 @@ public class PropertyListenerManager implements PropertyListener {
     @Override
     public final void propertyModified(final ScriptObject object, final Property oldProp, final Property newProp) {
         notifyPropertyModified(object, oldProp, newProp);
+    }
+
+    @Override
+    public final void protoChanged(final ScriptObject object, final ScriptObject oldProto, final ScriptObject newProto) {
+        notifyProtoChanged(object, oldProto, newProto);
     }
 }

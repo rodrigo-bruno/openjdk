@@ -24,10 +24,12 @@ import jdk.nashorn.internal.runtime.regexp.joni.encoding.IntHolder;
 
 import java.util.Arrays;
 
-public class EncodingHelper {
+public final class EncodingHelper {
 
-    public final static char NEW_LINE = 0xa;
-    public final static char RETURN   = 0xd;
+    final static int NEW_LINE            = 0x000a;
+    final static int RETURN              = 0x000d;
+    final static int LINE_SEPARATOR      = 0x2028;
+    final static int PARAGRAPH_SEPARATOR = 0x2029;
 
     final static char[] EMPTYCHARS = new char[0];
     final static int[][] codeRanges = new int[15][];
@@ -64,15 +66,11 @@ public class EncodingHelper {
     }
 
     public static boolean isNewLine(int code) {
-        return code == NEW_LINE;
+        return code == NEW_LINE || code == RETURN || code == LINE_SEPARATOR || code == PARAGRAPH_SEPARATOR;
     }
 
     public static boolean isNewLine(char[] chars, int p, int end) {
-        return p < end && chars[p] == NEW_LINE;
-    }
-
-    public static boolean isCrnl(char[] chars, int p, int end) {
-        return p + 1 < end && chars[p] == RETURN && chars[p + 1] == NEW_LINE;
+        return p < end && isNewLine(chars[p]);
     }
 
     // Encoding.prevCharHead
@@ -132,23 +130,6 @@ public class EncodingHelper {
         }
     }
 
-    // CodeRange.isInCodeRange
-    public static boolean isInCodeRange(int[]p, int code) {
-        int low = 0;
-        int n = p[0];
-        int high = n;
-
-        while (low < high) {
-            int x = (low + high) >> 1;
-            if (code > p[(x << 1) + 2]) {
-                low = x + 1;
-            } else {
-                high = x;
-            }
-        }
-        return low < n && code >= p[(low << 1) + 1];
-    }
-
     public static int[] ctypeCodeRange(int ctype, IntHolder sbOut) {
         sbOut.value = 0x100; // use bitset for codes smaller than 256
         int[] range = null;
@@ -188,7 +169,7 @@ public class EncodingHelper {
     }
 
     // CodeRange.isInCodeRange
-    public static boolean isInCodeRange(int[]p, int offset, int code) {
+    public static boolean isInCodeRange(int[] p, int offset, int code) {
         int low = 0;
         int n = p[offset];
         int high = n ;
@@ -211,7 +192,7 @@ public class EncodingHelper {
         int type;
         switch (ctype) {
             case CharacterType.NEWLINE:
-                return code == EncodingHelper.NEW_LINE;
+                return isNewLine(code);
             case CharacterType.ALPHA:
                 return (1 << Character.getType(code) & CharacterType.ALPHA_MASK) != 0;
             case CharacterType.BLANK:

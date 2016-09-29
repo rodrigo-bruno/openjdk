@@ -34,14 +34,18 @@ import java.util.Deque;
 import java.util.List;
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.support.TypeUtilities;
+import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Function;
 import jdk.nashorn.internal.objects.annotations.ScriptClass;
 import jdk.nashorn.internal.objects.annotations.Where;
+import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.ListAdapter;
 import jdk.nashorn.internal.runtime.PropertyMap;
 import jdk.nashorn.internal.runtime.ScriptObject;
+import jdk.nashorn.internal.runtime.ScriptRuntime;
+import jdk.nashorn.internal.runtime.linker.Bootstrap;
 import jdk.nashorn.internal.runtime.linker.JavaAdapterFactory;
 
 /**
@@ -54,9 +58,12 @@ import jdk.nashorn.internal.runtime.linker.JavaAdapterFactory;
 public final class NativeJava {
 
     // initialized by nasgen
+    @SuppressWarnings("unused")
     private static PropertyMap $nasgenmap$;
 
     private NativeJava() {
+        // don't create me
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -103,12 +110,22 @@ public final class NativeJava {
      * var anArrayList = new ArrayList
      * var anArrayListWithSize = new ArrayList(16)
      * </pre>
-     * In the special case of inner classes, you need to use the JVM fully qualified name, meaning using {@code $} sign
-     * in the class name:
+     * In the special case of inner classes, you can either use the JVM fully qualified name, meaning using {@code $}
+     * sign in the class name, or you can use the dot:
      * <pre>
      * var ftype = Java.type("java.awt.geom.Arc2D$Float")
      * </pre>
-     * However, once you retrieved the outer class, you can access the inner class as a property on it:
+     * and
+     * <pre>
+     * var ftype = Java.type("java.awt.geom.Arc2D.Float")
+     * </pre>
+     * both work. Note however that using the dollar sign is faster, as Java.type first tries to resolve the class name
+     * as it is originally specified, and the internal JVM names for inner classes use the dollar sign. If you use the
+     * dot, Java.type will internally get a ClassNotFoundException and subsequently retry by changing the last dot to
+     * dollar sign. As a matter of fact, it'll keep replacing dots with dollar signs until it either successfully loads
+     * the class or runs out of all dots in the name. This way it can correctly resolve and load even multiply nested
+     * inner classes with the dot notation. Again, this will be slower than using the dollar signs in the name. An
+     * alternative way to access the inner class is as a property of the outer class:
      * <pre>
      * var arctype = Java.type("java.awt.geom.Arc2D")
      * var ftype = arctype.Float
@@ -273,7 +290,9 @@ public final class NativeJava {
             return null;
         }
 
-        Global.checkObject(obj);
+        if (!(obj instanceof ScriptObject) && !(obj instanceof JSObject)) {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(obj));
+        }
 
         final Class<?> targetClass;
         if(objType == UNDEFINED) {
@@ -289,11 +308,11 @@ public final class NativeJava {
         }
 
         if(targetClass.isArray()) {
-            return ((ScriptObject)obj).getArray().asArrayOfType(targetClass.getComponentType());
+            return JSType.toJavaArray(obj, targetClass.getComponentType());
         }
 
         if(targetClass == List.class || targetClass == Deque.class) {
-            return new ListAdapter((ScriptObject)obj);
+            return ListAdapter.create(obj);
         }
 
         throw typeError("unsupported.java.to.type", targetClass.getName());
@@ -388,7 +407,33 @@ public final class NativeJava {
 
     private static Class<?> simpleType(final String typeName) throws ClassNotFoundException {
         final Class<?> primClass = TypeUtilities.getPrimitiveTypeByName(typeName);
-        return primClass != null ? primClass : Global.getThisContext().findClass(typeName);
+        if(primClass != null) {
+            return primClass;
+        }
+        final Context ctx = Global.getThisContext();
+        try {
+            return ctx.findClass(typeName);
+        } catch(ClassNotFoundException e) {
+            // The logic below compensates for a frequent user error - when people use dot notation to separate inner
+            // class names, i.e. "java.lang.Character.UnicodeBlock" vs."java.lang.Character$UnicodeBlock". The logic
+            // below will try alternative class names, replacing dots at the end of the name with dollar signs.
+            final StringBuilder nextName = new StringBuilder(typeName);
+            int lastDot = nextName.length();
+            for(;;) {
+                lastDot = nextName.lastIndexOf(".", lastDot - 1);
+                if(lastDot == -1) {
+                    // Exhausted the search space, class not found - rethrow the original exception.
+                    throw e;
+                }
+                nextName.setCharAt(lastDot, '$');
+                try {
+                    return ctx.findClass(nextName.toString());
+                } catch(ClassNotFoundException cnfe) {
+                    // Intentionally ignored, so the loop retries with the next name
+                }
+            }
+        }
+
     }
 
     private static Class<?> arrayType(final String typeName) throws ClassNotFoundException {
@@ -497,5 +542,26 @@ public final class NativeJava {
             throw typeError("extend.expects.java.types");
         }
         return JavaAdapterFactory.getAdapterClassFor(stypes, classOverrides);
+    }
+
+    /**
+     * When given an object created using {@code Java.extend()} or equivalent mechanism (that is, any JavaScript-to-Java
+     * adapter), returns an object that can be used to invoke superclass methods on that object. E.g.:
+     * <pre>
+     * var cw = new FilterWriterAdapter(sw) {
+     *     write: function(s, off, len) {
+     *         s = capitalize(s, off, len)
+     *         cw_super.write(s, 0, s.length())
+     *     }
+     * }
+     * var cw_super = Java.super(cw)
+     * </pre>
+     * @param self the {@code Java} object itself - not used.
+     * @param adapter the original Java adapter instance for which the super adapter is created.
+     * @return a super adapter for the original adapter
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR, name="super")
+    public static Object _super(final Object self, final Object adapter) {
+        return Bootstrap.createSuperAdapter(adapter);
     }
 }

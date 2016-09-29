@@ -28,10 +28,13 @@ package jdk.nashorn.internal.ir;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import jdk.nashorn.internal.codegen.CompileUnit;
+import jdk.nashorn.internal.codegen.types.ArrayType;
 import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
+import jdk.nashorn.internal.objects.NativeArray;
 import jdk.nashorn.internal.parser.Lexer.LexerToken;
 import jdk.nashorn.internal.parser.Token;
 import jdk.nashorn.internal.parser.TokenType;
@@ -45,9 +48,12 @@ import jdk.nashorn.internal.runtime.Undefined;
  * @param <T> the literal type
  */
 @Immutable
-public abstract class LiteralNode<T> extends Node implements PropertyKey {
+public abstract class LiteralNode<T> extends Expression implements PropertyKey {
     /** Literal value */
     protected final T value;
+
+    /** Marker for values that must be computed at runtime */
+    public static final Object POSTSET_MARKER = new Object();
 
     /**
      * Constructor
@@ -91,14 +97,6 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
      */
     public boolean isNull() {
         return value == null;
-    }
-
-    /**
-     * Check if the literal value is boolean true
-     * @return true if literal value is boolean true
-     */
-    public boolean isTrue() {
-        return JSType.toBoolean(value);
     }
 
     @Override
@@ -256,8 +254,36 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
         return new NullLiteralNode(parent.getToken(), parent.getFinish());
     }
 
+    /**
+     * Super class for primitive (side-effect free) literals.
+     *
+     * @param <T> the literal type
+     */
+    public static class PrimitiveLiteralNode<T> extends LiteralNode<T> {
+        private PrimitiveLiteralNode(final long token, final int finish, final T value) {
+            super(token, finish, value);
+        }
+
+        private PrimitiveLiteralNode(final PrimitiveLiteralNode<T> literalNode) {
+            super(literalNode);
+        }
+
+        /**
+         * Check if the literal value is boolean true
+         * @return true if literal value is boolean true
+         */
+        public boolean isTrue() {
+            return JSType.toBoolean(value);
+        }
+
+        @Override
+        public boolean isLocal() {
+            return true;
+        }
+    }
+
     @Immutable
-    private static final class BooleanLiteralNode extends LiteralNode<Boolean> {
+    private static final class BooleanLiteralNode extends PrimitiveLiteralNode<Boolean> {
 
         private BooleanLiteralNode(final long token, final int finish, final boolean value) {
             super(Token.recast(token, value ? TokenType.TRUE : TokenType.FALSE), finish, value);
@@ -309,7 +335,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
     }
 
     @Immutable
-    private static final class NumberLiteralNode extends LiteralNode<Number> {
+    private static final class NumberLiteralNode extends PrimitiveLiteralNode<Number> {
 
         private final Type type = numberGetType(value);
 
@@ -371,7 +397,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
         return new NumberLiteralNode(parent.getToken(), parent.getFinish(), value);
     }
 
-    private static class UndefinedLiteralNode extends LiteralNode<Undefined> {
+    private static class UndefinedLiteralNode extends PrimitiveLiteralNode<Undefined> {
         private UndefinedLiteralNode(final long token, final int finish) {
             super(Token.recast(token, TokenType.OBJECT), finish, ScriptRuntime.UNDEFINED);
         }
@@ -407,7 +433,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
     }
 
     @Immutable
-    private static class StringLiteralNode extends LiteralNode<String> {
+    private static class StringLiteralNode extends PrimitiveLiteralNode<String> {
         private StringLiteralNode(final long token, final int finish, final String value) {
             super(Token.recast(token, TokenType.STRING), finish, value);
         }
@@ -495,7 +521,25 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
         return new LexerTokenLiteralNode(parent.getToken(), parent.getFinish(), value);
     }
 
-    private static final class NullLiteralNode extends LiteralNode<Object> {
+    /**
+     * Get the constant value for an object, or {@link #POSTSET_MARKER} if the value can't be statically computed.
+     *
+     * @param object a node or value object
+     * @return the constant value or {@code POSTSET_MARKER}
+     */
+    public static Object objectAsConstant(final Object object) {
+        if (object == null) {
+            return null;
+        } else if (object instanceof Number || object instanceof String || object instanceof Boolean) {
+            return object;
+        } else if (object instanceof LiteralNode) {
+            return objectAsConstant(((LiteralNode<?>)object).getValue());
+        }
+
+        return POSTSET_MARKER;
+    }
+
+    private static final class NullLiteralNode extends PrimitiveLiteralNode<Object> {
 
         private NullLiteralNode(final long token, final int finish) {
             super(Token.recast(token, TokenType.OBJECT), finish, null);
@@ -524,12 +568,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
     /**
      * Array literal node class.
      */
-    public static final class ArrayLiteralNode extends LiteralNode<Node[]> {
-        private static class PostsetMarker {
-            //empty
-        }
-
-        private static PostsetMarker POSTSET_MARKER = new PostsetMarker();
+    public static final class ArrayLiteralNode extends LiteralNode<Expression[]> {
 
         /** Array element type. */
         private Type elementType;
@@ -597,7 +636,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
          * @param finish  finish
          * @param value   array literal value, a Node array
          */
-        protected ArrayLiteralNode(final long token, final int finish, final Node[] value) {
+        protected ArrayLiteralNode(final long token, final int finish, final Expression[] value) {
             super(Token.recast(token, TokenType.ARRAY), finish, value);
             this.elementType = Type.UNKNOWN;
         }
@@ -606,7 +645,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
          * Copy constructor
          * @param node source array literal node
          */
-        private ArrayLiteralNode(final ArrayLiteralNode node, final Node[] value) {
+        private ArrayLiteralNode(final ArrayLiteralNode node, final Expression[] value) {
             super(node, value);
             this.elementType = node.elementType;
             this.presets     = node.presets;
@@ -715,7 +754,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
         }
 
         private void analyzeElements() {
-            for (final Node node : value) {
+            for (final Expression node : value) {
                 if (node == null) {
                     elementType = elementType.widest(Type.OBJECT); //no way to represent undefined as number
                     break;
@@ -740,31 +779,16 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
             }
         }
 
-        private Object objectAsConstant(final Object object) {
-            if (object == null) {
-                return null;
-            } else if (object instanceof Number || object instanceof String || object instanceof Boolean) {
-                return object;
-            } else if (object instanceof LiteralNode) {
-                return objectAsConstant(((LiteralNode<?>)object).getValue());
-            } else if (object instanceof UnaryNode) {
-                final UnaryNode unaryNode = (UnaryNode)object;
-
-                if (unaryNode.isTokenType(TokenType.CONVERT) && unaryNode.getType().isObject()) {
-                    return objectAsConstant(unaryNode.rhs());
-                }
-            }
-
-            return POSTSET_MARKER;
-        }
-
         @Override
         public Node[] getArray() {
             return value;
         }
 
-        @Override
-        public Type getType() {
+        /**
+         * Get the array element type as Java format, e.g. [I
+         * @return array element type
+         */
+        public ArrayType getArrayType() {
             if (elementType.isInteger()) {
                 return Type.INT_ARRAY;
             } else if (elementType.isLong()) {
@@ -774,6 +798,11 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
             } else {
                 return Type.OBJECT_ARRAY;
             }
+        }
+
+        @Override
+        public Type getType() {
+            return Type.typeFor(NativeArray.class);
         }
 
         /**
@@ -822,15 +851,15 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
         @Override
         public Node accept(final NodeVisitor<? extends LexicalContext> visitor) {
             if (visitor.enterLiteralNode(this)) {
-                final List<Node> oldValue = Arrays.asList(value);
-                final List<Node> newValue = Node.accept(visitor, Node.class, oldValue);
+                final List<Expression> oldValue = Arrays.asList(value);
+                final List<Expression> newValue = Node.accept(visitor, Expression.class, oldValue);
                 return visitor.leaveLiteralNode(oldValue != newValue ? setValue(newValue) : this);
             }
             return this;
         }
 
-        private ArrayLiteralNode setValue(final List<Node> value) {
-            return new ArrayLiteralNode(this, value.toArray(new Node[value.size()]));
+        private ArrayLiteralNode setValue(final List<Expression> value) {
+            return new ArrayLiteralNode(this, value.toArray(new Expression[value.size()]));
         }
 
         @Override
@@ -862,8 +891,8 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
      *
      * @return the new literal node
      */
-    public static LiteralNode<Node[]> newInstance(final long token, final int finish, final List<Node> value) {
-        return new ArrayLiteralNode(token, finish, value.toArray(new Node[value.size()]));
+    public static LiteralNode<Expression[]> newInstance(final long token, final int finish, final List<Expression> value) {
+        return new ArrayLiteralNode(token, finish, value.toArray(new Expression[value.size()]));
     }
 
 
@@ -875,8 +904,8 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
      *
      * @return the new literal node
      */
-    public static LiteralNode<?> newInstance(final Node parent, final List<Node> value) {
-        return new ArrayLiteralNode(parent.getToken(), parent.getFinish(), value.toArray(new Node[value.size()]));
+    public static LiteralNode<?> newInstance(final Node parent, final List<Expression> value) {
+        return new ArrayLiteralNode(parent.getToken(), parent.getFinish(), value.toArray(new Expression[value.size()]));
     }
 
     /**
@@ -888,7 +917,7 @@ public abstract class LiteralNode<T> extends Node implements PropertyKey {
      *
      * @return the new literal node
      */
-    public static LiteralNode<Node[]> newInstance(final long token, final int finish, final Node[] value) {
+    public static LiteralNode<Expression[]> newInstance(final long token, final int finish, final Expression[] value) {
         return new ArrayLiteralNode(token, finish, value);
     }
 }

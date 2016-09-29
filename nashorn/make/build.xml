@@ -46,21 +46,38 @@
     <available property="asm.available" classname="jdk.internal.org.objectweb.asm.Type"/>
     <!-- check if testng.jar is avaiable -->
     <available property="testng.available" file="${file.reference.testng.jar}"/>
+    <!-- check if Jemmy ang testng.jar are avaiable -->
+    <condition property="jemmy.jfx.testng.available" value="true">
+      <and> 
+        <available file="${file.reference.jemmyfx.jar}"/>
+        <available file="${file.reference.jemmycore.jar}"/>
+        <available file="${file.reference.jemmyawtinput.jar}"/>
+        <available file="${file.reference.jfxrt.jar}"/>
+        <isset property="testng.available"/>
+      </and>
+    </condition>
 
-	<!-- enable/disable make code coverage -->
-	<condition property="cc.enabled">
-		<istrue value="${make.code.coverage}" />
-	</condition>
+    <!-- enable/disable make code coverage -->
+    <condition property="cc.enabled">
+        <istrue value="${make.code.coverage}" />
+    </condition>
+
+    <!-- exclude tests in exclude lists -->
+    <condition property="exclude.list" value="./exclude/exclude_list_cc.txt" else="./exclude/exclude_list.txt">
+      <istrue value="${make.code.coverage}" />
+    </condition>
   </target>
 
   <target name="init" depends="init-conditions, init-cc">
 
-	<!-- extends jvm args -->
-	<property name="run.test.jvmargs" value="${run.test.jvmargs.main}  ${run.test.cc.jvmargs}"/>
-	<property name="run.test.jvmargs.octane" value="${run.test.jvmargs.octane.main}  ${run.test.cc.jvmargs}" />
+    <!-- extends jvm args -->
+    <property name="run.test.jvmargs" value="${run.test.jvmargs.main}  ${run.test.cc.jvmargs}"/>
+    <property name="run.test.jvmargs.octane" value="${run.test.jvmargs.octane.main}  ${run.test.cc.jvmargs}" />
 
     <echo message="run.test.jvmargs=${run.test.jvmargs}"/>
     <echo message="run.test.jvmargs.octane=${run.test.jvmargs.octane}"/>
+    <echo message="run.test.xms=${run.test.xms}"/>
+    <echo message="run.test.xmx=${run.test.xmx}"/>
 
   </target>
 
@@ -100,7 +117,8 @@
            target="${javac.target}"
            debug="${javac.debug}"
            encoding="${javac.encoding}"
-           includeantruntime="false">
+           includeantruntime="false" fork="true">
+      <compilerarg value="-J-Djava.ext.dirs="/>
       <compilerarg value="-Xlint:unchecked"/>
       <compilerarg value="-Xlint:deprecation"/>
       <compilerarg value="-XDignore.symbol.file"/>
@@ -218,9 +236,19 @@
            target="${javac.target}"
            debug="${javac.debug}"
            encoding="${javac.encoding}"
-           includeantruntime="false">
-        <compilerarg line="-extdirs &quot;&quot;"/>
+           includeantruntime="false" fork="true">
+        <compilerarg value="-J-Djava.ext.dirs="/>
+        <compilerarg value="-Xlint:unchecked"/>
+        <compilerarg value="-Xlint:deprecation"/>
     </javac>
+
+    <copy todir="${build.test.classes.dir}/META-INF/services">
+       <fileset dir="${test.src.dir}/META-INF/services/"/>
+    </copy>
+
+    <copy todir="${build.test.classes.dir}/jdk/nashorn/internal/runtime/resources">
+       <fileset dir="${test.src.dir}/jdk/nashorn/internal/runtime/resources"/>
+    </copy>
 
     <!-- tests that check nashorn internals and internal API -->
     <jar jarfile="${nashorn.internal.tests.jar}">
@@ -230,49 +258,50 @@
     <!-- tests that check nashorn script engine (jsr-223) API -->
     <jar jarfile="${nashorn.api.tests.jar}">
       <fileset dir="${build.test.classes.dir}" includes="**/api/**"/>
+      <fileset dir="${build.test.classes.dir}" includes="**/META-INF/**"/>
+      <fileset dir="${build.test.classes.dir}" includes="**/resources/*.js"/>
     </jar>
 
   </target>
 
   <target name="generate-policy-file" depends="prepare">
-    <!-- Generating nashorn.policy file -->
+    <echo file="${build.dir}/nashorn.policy">
 
-    <!-- nashorn internal tests jar requires AllPermission -->
-    <echo message="grant codeBase &quot;file:/${basedir}/${nashorn.internal.tests.jar}&quot; {" file="${build.dir}/nashorn.policy"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.security.AllPermission;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/${nashorn.internal.tests.jar}" {
+    permission java.security.AllPermission;
+};
 
-    <!-- TestNG framework jar needs AllPermission -->
-    <echo message="grant codeBase &quot;file:/${basedir}/${file.reference.testng.jar}&quot; {" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.security.AllPermission;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/${file.reference.testng.jar}" {
+    permission java.security.AllPermission;
+};
 
-    <!-- AllPermission to test/script/trusted tests -->
-    <echo message="grant codeBase &quot;file:/${basedir}/test/script/trusted/*&quot; {" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.security.AllPermission;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/test/script/trusted/*" {
+    permission java.security.AllPermission;
+};
 
-    <echo message="grant codeBase &quot;file:/${basedir}/test/script/basic/*&quot; {" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <!-- test/script/basic .js scripts load other script tests -->
-    <echo message="    permission java.io.FilePermission &quot;${basedir}/test/script/-&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.io.FilePermission &quot;user.dir&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.util.PropertyPermission &quot;user.dir&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <!-- test/script/basic .js scripts can read nashorn.test.* properties -->
-    <echo message="    permission java.util.PropertyPermission &quot;nashorn.test.*&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/test/script/basic/*" {
+    permission java.io.FilePermission "${basedir}/test/script/-", "read";
+    permission java.io.FilePermission "$${user.dir}", "read";
+    permission java.util.PropertyPermission "user.dir", "read";
+    permission java.util.PropertyPermission "nashorn.test.*", "read";
+};
+
+grant codeBase "file:/${basedir}/test/script/basic/parser/*" {
+    permission java.io.FilePermission "${basedir}/test/script/-", "read";
+    permission java.io.FilePermission "$${user.dir}", "read";
+    permission java.util.PropertyPermission "user.dir", "read";
+    permission java.util.PropertyPermission "nashorn.test.*", "read";
+};
+
+grant codeBase "file:/${basedir}/test/script/basic/JDK-8010946-privileged.js" {
+    permission java.util.PropertyPermission "java.security.policy", "read";
+};
+
+grant codeBase "file:/${basedir}/test/script/basic/classloader.js" {
+    permission java.lang.RuntimePermission "nashorn.JavaReflection";
+};
+
+    </echo>
 
     <replace file="${build.dir}/nashorn.policy"><replacetoken>\</replacetoken><replacevalue>/</replacevalue></replace>    <!--hack for Windows - to make URLs with normal path separators -->
     <replace file="${build.dir}/nashorn.policy"><replacetoken>//</replacetoken><replacevalue>/</replacevalue></replace>   <!--hack for Unix - to avoid leading // in URLs -->
@@ -294,19 +323,6 @@
   </target>
 
   <target name="test" depends="jar, check-testng, check-external-tests, compile-test, generate-policy-file" if="testng.available">
-    <java classname="${nashorn.shell.tool}" fork="true" dir="${test.script.dir}/representations" output="${build.dir}/output1.log" error="${build.dir}/err.log">
-      <jvmarg line="${ext.class.path}"/>
-      <jvmarg line="-Dnashorn.fields.dual=true"/>
-      <arg value="NASHORN-592a.js"/>
-    </java>
-    <java classname="${nashorn.shell.tool}" fork="true" dir="${test.script.dir}/representations" output="${build.dir}/output2.log" error="${build.dir}/err.log">
-      <jvmarg line="${ext.class.path}"/>
-      <arg value="NASHORN-592a.js"/>
-    </java>
-    <condition property="representation-ok">
-      <filesmatch file1="${build.dir}/output1.log" file2="${build.dir}/output2.log"/>
-    </condition>
-    <fail unless="representation-ok">Representation test failed - output differs!</fail>
     <fileset id="test.classes" dir="${build.test.classes.dir}">
       <include name="**/api/javaaccess/*Test.class"/>
       <include name="**/api/scripting/*Test.class"/>
@@ -321,11 +337,12 @@
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
       <jvmarg line="${ext.class.path}"/>
-      <jvmarg line="${run.test.jvmargs} ${run.test.jvmsecurityargs}"/>
+      <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs}"/>
       <propertyset>
         <propertyref prefix="test-sys-prop."/>
         <mapper from="test-sys-prop.*" to="*" type="glob"/>
       </propertyset>
+      <sysproperty key="test.js.excludes.file" value="${exclude.list}"/>
       <classpath>
           <pathelement path="${run.test.classpath}"/>
       </classpath>
@@ -336,7 +353,7 @@
       <!-- use just build.test.classes.dir to avoid referring to TestNG -->
       <java classname="${parallel.test.runner}" dir="${basedir}" classpath="${build.test.classes.dir}" failonerror="true" fork="true">
       <jvmarg line="${ext.class.path}"/>
-      <jvmarg line="${run.test.jvmargs} ${run.test.jvmsecurityargs}"/>
+      <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs}"/>
       <syspropertyset>
           <propertyref prefix="test-sys-prop."/>
           <mapper type="glob" from="test-sys-prop.*" to="*"/>
@@ -344,6 +361,38 @@
       </java>
   </target>
 
+  <target name="check-jemmy.jfx.testng" unless="jemmy.jfx.testng.available">
+    <echo message="WARNING: Jemmy or JavaFX or TestNG not available, will not run tests. Please copy testng.jar, JemmyCore.jar, JemmyFX.jar, JemmyAWTInput.jar under test${file.separator}lib directory. And make sure you have jfxrt.jar in ${java.home}${file.separator}lib${file.separator}ext dir."/>
+  </target>
+
+  <target name="testjfx" depends="jar, check-jemmy.jfx.testng, compile-test" if="jemmy.jfx.testng.available">
+    <fileset id="test.classes" dir="${build.test.classes.dir}">
+       <include name="**/framework/*Test.class"/>
+    </fileset>
+    
+    <copy file="${file.reference.jfxrt.jar}" todir="dist"/>
+    
+    <condition property="jfx.prism.order" value="-Dprism.order=j2d" else=" ">
+		<not>
+            <os family="mac"/>
+        </not>
+	</condition>
+    
+    <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
+       verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
+      <jvmarg line="${ext.class.path}"/>
+      <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
+      <propertyset>
+        <propertyref prefix="testjfx-test-sys-prop."/>
+        <mapper from="testjfx-test-sys-prop.*" to="*" type="glob"/>
+      </propertyset>
+      <sysproperty key="test.fork.jvm.options" value="${testjfx-test-sys-prop.test.fork.jvm.options} ${jfx.prism.order}"/>
+      <classpath>
+          <pathelement path="${testjfx.run.test.classpath}"/>
+      </classpath>
+    </testng>
+  </target>
+  
   <target name="test262" depends="jar, check-testng, check-external-tests, compile-test, generate-policy-file" if="testng.available">
     <fileset id="test.classes" dir="${build.test.classes.dir}">
        <include name="**/framework/*Test.class"/>
@@ -352,7 +401,7 @@
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
       <jvmarg line="${ext.class.path}"/>
-      <jvmarg line="${run.test.jvmargs} ${run.test.jvmsecurityargs}"/>
+      <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs}"/>
       <propertyset>
         <propertyref prefix="test262-test-sys-prop."/>
         <mapper from="test262-test-sys-prop.*" to="*" type="glob"/>
@@ -369,7 +418,7 @@
     <!-- use just build.test.classes.dir to avoid referring to TestNG -->
     <java classname="${parallel.test.runner}" dir="${basedir}" fork="true">
       <jvmarg line="${ext.class.path}"/>
-      <jvmarg line="${run.test.jvmargs} ${run.test.jvmsecurityargs}"/>
+      <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs}"/>
       <classpath>
           <pathelement path="${run.test.classpath}"/>
       </classpath>
@@ -387,7 +436,7 @@
       description="Run the shell with a sample script">
     <java classname="${nashorn.shell.tool}" fork="true" dir="samples">
         <jvmarg line="${ext.class.path}"/>
-        <jvmarg line="${run.test.jvmargs}"/>
+        <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="-dump-on-error"/>
         <arg value="test.js"/>
     </java>
@@ -397,7 +446,7 @@
       description="Debug the shell with a sample script">
     <java classname="${nashorn.shell.tool}" fork="true" dir="samples">
         <jvmarg line="${ext.class.path}"/>
-        <jvmarg line="${run.test.jvmargs}"/>
+        <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="--print-code"/>
         <arg value="--verify-code"/>
         <arg value="--print-symbols"/>

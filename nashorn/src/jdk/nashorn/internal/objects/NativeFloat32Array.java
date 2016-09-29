@@ -48,6 +48,7 @@ public final class NativeFloat32Array extends ArrayBufferView {
     public static final int BYTES_PER_ELEMENT = 4;
 
     // initialized by nasgen
+    @SuppressWarnings("unused")
     private static PropertyMap $nasgenmap$;
 
     private static final Factory FACTORY = new Factory(BYTES_PER_ELEMENT) {
@@ -144,6 +145,11 @@ public final class NativeFloat32Array extends ArrayBufferView {
     }
 
     @Override
+    public String getClassName() {
+        return "Float32Array";
+    }
+
+    @Override
     protected Factory factory() {
         return FACTORY;
     }
@@ -191,7 +197,7 @@ public final class NativeFloat32Array extends ArrayBufferView {
     }
 
     @Override
-    protected ScriptObject getPrototype() {
-        return Global.instance().getFloat32ArrayPrototype();
+    protected ScriptObject getPrototype(final Global global) {
+        return global.getFloat32ArrayPrototype();
     }
 }

@@ -36,10 +36,15 @@ import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.DynamicLinker;
 import jdk.internal.dynalink.DynamicLinkerFactory;
 import jdk.internal.dynalink.beans.BeansLinker;
+import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkerServices;
+import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.codegen.CompilerConstants.Call;
 import jdk.nashorn.internal.codegen.RuntimeCallSite;
+import jdk.nashorn.internal.runtime.JSType;
+import jdk.nashorn.internal.runtime.ScriptFunction;
+import jdk.nashorn.internal.runtime.ScriptRuntime;
 import jdk.nashorn.internal.runtime.options.Options;
 
 /**
@@ -57,14 +62,54 @@ public final class Bootstrap {
     static {
         final DynamicLinkerFactory factory = new DynamicLinkerFactory();
         factory.setPrioritizedLinkers(new NashornLinker(), new NashornPrimitiveLinker(), new NashornStaticClassLinker(),
-                new JSObjectLinker(), new ReflectionCheckLinker());
-        factory.setFallbackLinkers(new BeansLinker(), new NashornBottomLinker());
+                new BoundDynamicMethodLinker(), new JavaSuperAdapterLinker(), new JSObjectLinker(), new ReflectionCheckLinker());
+        factory.setFallbackLinkers(new NashornBeansLinker(), new NashornBottomLinker());
         factory.setSyncOnRelink(true);
         final int relinkThreshold = Options.getIntProperty("nashorn.unstable.relink.threshold", -1);
         if (relinkThreshold > -1) {
             factory.setUnstableRelinkThreshold(relinkThreshold);
         }
+
+        // Linkers for any additional language runtimes deployed alongside Nashorn will be picked up by the factory.
+        factory.setClassLoader(Bootstrap.class.getClassLoader());
+
         dynamicLinker = factory.createLinker();
+    }
+
+    /**
+     * Returns if the given object is a "callable"
+     * @param obj object to be checked for callability
+     * @return true if the obj is callable
+     */
+    public static boolean isCallable(final Object obj) {
+        if (obj == ScriptRuntime.UNDEFINED || obj == null) {
+            return false;
+        }
+
+        return obj instanceof ScriptFunction ||
+            ((obj instanceof JSObject) && ((JSObject)obj).isFunction()) ||
+            isDynamicMethod(obj) ||
+            isFunctionalInterfaceObject(obj) ||
+            obj instanceof StaticClass;
+    }
+
+    /**
+     * Returns if the given object is a dynalink Dynamic method
+     * @param obj object to be checked
+     * @return true if the obj is a dynamic method
+     */
+    public static boolean isDynamicMethod(final Object obj) {
+        return obj instanceof BoundDynamicMethod || BeansLinker.isDynamicMethod(obj);
+    }
+
+    /**
+     * Returns if the given object is an instance of an interface annotated with
+     * java.lang.FunctionalInterface
+     * @param obj object to be checked
+     * @return true if the obj is an instance of @FunctionalInterface interface
+     */
+    public static boolean isFunctionalInterfaceObject(final Object obj) {
+        return !JSType.isPrimitive(obj) && (NashornBottomLinker.getFunctionalInterfaceMethod(obj.getClass()) != null);
     }
 
     /**
@@ -78,7 +123,7 @@ public final class Bootstrap {
      * @return CallSite with MethodHandle to appropriate method or null if not found.
      */
     public static CallSite bootstrap(final Lookup lookup, final String opDesc, final MethodType type, final int flags) {
-        return dynamicLinker.link(LinkerCallSite.newLinkerCallSite(opDesc, type, flags));
+        return dynamicLinker.link(LinkerCallSite.newLinkerCallSite(lookup, opDesc, type, flags));
     }
 
     /**
@@ -94,12 +139,12 @@ public final class Bootstrap {
         return new RuntimeCallSite(type, initialName);
     }
 
-
     /**
-     * Returns a dynamic invoker for a specified dynamic operation. You can use this method to create a method handle
-     * that when invoked acts completely as if it were a Nashorn-linked call site. An overview of available dynamic
-     * operations can be found in the <a href="https://github.com/szegedi/dynalink/wiki/User-Guide-0.4">Dynalink User Guide</a>,
-     * but we'll show few examples here:
+     * Returns a dynamic invoker for a specified dynamic operation using the public lookup. You can use this method to
+     * create a method handle that when invoked acts completely as if it were a Nashorn-linked call site. An overview of
+     * available dynamic operations can be found in the
+     * <a href="https://github.com/szegedi/dynalink/wiki/User-Guide-0.6">Dynalink User Guide</a>, but we'll show few
+     * examples here:
      * <ul>
      *   <li>Get a named property with fixed name:
      *     <pre>
@@ -196,7 +241,7 @@ public final class Bootstrap {
     }
 
     /**
-     * Returns a dynamic invoker for a specified dynamic operation. Similar to
+     * Returns a dynamic invoker for a specified dynamic operation using the public lookup. Similar to
      * {@link #createDynamicInvoker(String, Class, Class...)} but with return and parameter types composed into a
      * method type in the signature. See the discussion of that method for details.
      * @param opDesc Dynalink dynamic operation descriptor.
@@ -204,7 +249,38 @@ public final class Bootstrap {
      * @return MethodHandle for invoking the operation.
      */
     public static MethodHandle createDynamicInvoker(final String opDesc, final MethodType type) {
-        return bootstrap(null, opDesc, type, 0).dynamicInvoker();
+        return bootstrap(MethodHandles.publicLookup(), opDesc, type, 0).dynamicInvoker();
+    }
+
+    /**
+     * Binds a bean dynamic method (returned by invoking {@code dyn:getMethod} on an object linked with
+     * {@code BeansLinker} to a receiver.
+     * @param dynamicMethod the dynamic method to bind
+     * @param boundThis the bound "this" value.
+     * @return a bound dynamic method.
+     */
+    public static Object bindDynamicMethod(Object dynamicMethod, Object boundThis) {
+        return new BoundDynamicMethod(dynamicMethod, boundThis);
+    }
+
+    /**
+     * Creates a super-adapter for an adapter, that is, an adapter to the adapter that allows invocation of superclass
+     * methods on it.
+     * @param adapter the original adapter
+     * @return a new adapter that can be used to invoke super methods on the original adapter.
+     */
+    public static Object createSuperAdapter(final Object adapter) {
+        return new JavaSuperAdapter(adapter);
+    }
+
+    /**
+     * If the given class is a reflection-specific class (anything in {@code java.lang.reflect} and
+     * {@code java.lang.invoke} package, as well a {@link Class} and any subclass of {@link ClassLoader}) and there is
+     * a security manager in the system, then it checks the {@code nashorn.JavaReflection} {@code RuntimePermission}.
+     * @param clazz the class being tested
+     */
+    public static void checkReflectionAccess(Class<?> clazz) {
+        ReflectionCheckLinker.checkReflectionAccess(clazz);
     }
 
     /**

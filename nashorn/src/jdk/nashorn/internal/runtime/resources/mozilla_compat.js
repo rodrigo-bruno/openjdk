@@ -41,14 +41,19 @@ Object.defineProperty(this, "JavaAdapter", {
     }
 });
 
+
 // importPackage
+// avoid unnecessary chaining of __noSuchProperty__ again
+// in case user loads this script more than once.
+if (typeof importPackage == 'undefined') {
+
 Object.defineProperty(this, "importPackage", {
     configurable: true, enumerable: false, writable: true,
     value: (function() {
         var _packages = [];
         var global = this;
         var oldNoSuchProperty = global.__noSuchProperty__;
-        global.__noSuchProperty__ = function(name) {
+        var __noSuchProperty__ = function(name) {
             'use strict';
             for (var i in _packages) {
                 try {
@@ -69,6 +74,11 @@ Object.defineProperty(this, "importPackage", {
             }
         }
 
+        Object.defineProperty(global, "__noSuchProperty__", {
+            writable: true, configurable: true, enumerable: false,
+            value: __noSuchProperty__
+        });
+
         var prefix = "[JavaPackage ";
         return function() {
             for (var i in arguments) {
@@ -84,6 +94,19 @@ Object.defineProperty(this, "importPackage", {
             }
         }
     })()
+});
+
+}
+
+// sync
+Object.defineProperty(this, "sync", {
+    configurable: true, enumerable: false, writable: true,
+    value: function(func, syncobj) {
+        if (arguments.length < 1 || arguments.length > 2 ) {
+            throw "sync(function [,object]) parameter count mismatch";
+        }
+        return Packages.jdk.nashorn.api.scripting.ScriptUtils.makeSynchronizedFunction(func, syncobj);
+    }
 });
 
 // Object.prototype.__defineGetter__
@@ -129,17 +152,6 @@ Object.defineProperty(Object.prototype, "__lookupSetter__", {
             obj = Object.getPrototypeOf(obj);
         }
         return undefined;
-    }
-});
-
-// Object.prototype.__proto__ (read-only)
-Object.defineProperty(Object.prototype, "__proto__", {
-    configurable: true, enumerable: false,
-    get: function() {
-        return Object.getPrototypeOf(this);
-    },
-    set: function(x) {
-        throw new TypeError("__proto__ set not supported");
     }
 });
 
@@ -350,13 +362,16 @@ Object.defineProperty(String.prototype, "sup", {
 // Rhino: global.importClass
 Object.defineProperty(this, "importClass", {
     configurable: true, enumerable: false, writable: true,
-    value: function(clazz) {
-        if (Java.isType(clazz)) {
-            var className = Java.typeName(clazz);
-            var simpleName = className.substring(className.lastIndexOf('.') + 1);
-            this[simpleName] = clazz;
-        } else {
-            throw new TypeError(clazz + " is not a Java class");
+    value: function() {
+        for (var arg in arguments) {
+            var clazz = arguments[arg];
+            if (Java.isType(clazz)) {
+                var className = Java.typeName(clazz);
+                var simpleName = className.substring(className.lastIndexOf('.') + 1);
+                this[simpleName] = clazz;
+            } else {
+                throw new TypeError(clazz + " is not a Java class");
+            }
         }
     }
 });

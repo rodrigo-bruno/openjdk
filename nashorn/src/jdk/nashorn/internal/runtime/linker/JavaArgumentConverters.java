@@ -25,9 +25,9 @@
 
 package jdk.nashorn.internal.runtime.linker;
 
+import static jdk.nashorn.internal.lookup.Lookup.MH;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
 import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
-import static jdk.nashorn.internal.lookup.Lookup.MH;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -42,7 +42,7 @@ import jdk.nashorn.internal.runtime.ScriptObject;
  * Utility class shared by {@code NashornLinker} and {@code NashornPrimitiveLinker} for converting JS values to Java
  * types.
  */
-public class JavaArgumentConverters {
+final class JavaArgumentConverters {
 
     private static final MethodHandle TO_BOOLEAN        = findOwnMH("toBoolean", Boolean.class, Object.class);
     private static final MethodHandle TO_STRING         = findOwnMH("toString", String.class, Object.class);
@@ -211,6 +211,20 @@ public class JavaArgumentConverters {
                 return null;
             } else if (obj instanceof Long) {
                 return (Long) obj;
+            } else if (obj instanceof Integer) {
+                return ((Integer)obj).longValue();
+            } else if (obj instanceof Double) {
+                final Double d = (Double)obj;
+                if(Double.isInfinite(d.doubleValue())) {
+                    return 0L;
+                }
+                return d.longValue();
+            } else if (obj instanceof Float) {
+                final Float f = (Float)obj;
+                if(Float.isInfinite(f.floatValue())) {
+                    return 0L;
+                }
+                return f.longValue();
             } else if (obj instanceof Number) {
                 return ((Number)obj).longValue();
             } else if (obj instanceof String || obj instanceof ConsString) {
