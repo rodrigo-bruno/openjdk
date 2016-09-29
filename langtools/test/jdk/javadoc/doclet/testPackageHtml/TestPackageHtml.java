@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,17 +21,28 @@
  * questions.
  */
 
-package pkg;
+/*
+ * @test
+ * @bug      8150096
+ * @summary  Make sure package.html is recognized by doclint
+ * @library  ../lib
+ * @modules jdk.javadoc/jdk.javadoc.internal.tool
+ * @build    JavadocTester
+ * @run main TestPackageHtml
+ */
 
-@RegDoc(x=1)
-public class D {
+public class TestPackageHtml extends JavadocTester {
+    public static void main(String... args) throws Exception  {
+        TestPackageHtml tester = new TestPackageHtml();
+        tester.runTests();
+    }
 
-    @RegArryDoc(y={1})
-    public void test1() {}
-
-    @RegArryDoc(y={1,2})
-    public void test2() {}
-
-    @NonSynthDocContainer({@RegArryDoc})
-    public void test3() {}
+    @Test
+    void testPackageHtml() {
+        javadoc("-d", "out-pkg-html",
+                "-sourcepath", testSrc,
+                "pkg1");
+        checkExit(Exit.FAILED);
+        checkOutput(Output.OUT, true, "package.html:10: error: bad use of '>'");
+    }
 }
