@@ -27,8 +27,8 @@ include LibCommon.gmk
 
 ################################################################################
 
-LIBJ2PKCS11_SRC := $(JDK_TOPDIR)/src/jdk.crypto.pkcs11/share/native/libj2pkcs11 \
-    $(JDK_TOPDIR)/src/jdk.crypto.pkcs11/$(OPENJDK_TARGET_OS_TYPE)/native/libj2pkcs11
+LIBJ2PKCS11_SRC := $(SRC_ROOT)/src/jdk.crypto.pkcs11/share/native/libj2pkcs11 \
+    $(SRC_ROOT)/src/jdk.crypto.pkcs11/$(OPENJDK_TARGET_OS_TYPE)/native/libj2pkcs11
 
 $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PKCS11, \
     LIBRARY := j2pkcs11, \

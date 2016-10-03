@@ -141,34 +141,22 @@ $(FULL_COMPANY_NAME) in the US and other countries.
 ALL_SOURCE_DIRS := $(wildcard \
       $(SUPPORT_OUTPUTDIR)/gensrc/j* \
       $(if $(IMPORT_MODULES_SRC), $(IMPORT_MODULES_SRC)/*) \
-      $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
-      $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
-      $(JDK_TOPDIR)/src/*/share/classes \
-      $(HOTSPOT_TOPDIR)/src/*/share/classes \
-      $(LANGTOOLS_TOPDIR)/src/*/share/classes \
-      $(NASHORN_TOPDIR)/src/*/share/classes \
-      $(CORBA_TOPDIR)/src/*/share/classes \
-      $(JAXP_TOPDIR)/src/*/share/classes \
-      $(JAXWS_TOPDIR)/src/*/share/classes \
+      $(SRC_ROOT)/src/*/$(OPENJDK_TARGET_OS)/classes \
+      $(SRC_ROOT)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
+      $(SRC_ROOT)/src/*/share/classes \
       $(SUPPORT_OUTPUTDIR)/rmic/j* \
-      $(JDK_TOPDIR)/src/*/share/doc/stub \
+      $(SRC_ROOT)/src/*/share/doc/stub \
       ) \
       #
 
 ALL_MODULE_SOURCE_DIRS := \
       $(SUPPORT_OUTPUTDIR)/gensrc/* \
       $(if $(IMPORT_MODULES_SRC), $(IMPORT_MODULES_SRC)/*) \
-      $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS)/classes \
-      $(JDK_TOPDIR)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
-      $(JDK_TOPDIR)/src/*/share/classes \
-      $(HOTSPOT_TOPDIR)/src/*/share/classes \
-      $(LANGTOOLS_TOPDIR)/src/*/share/classes \
-      $(NASHORN_TOPDIR)/src/*/share/classes \
-      $(CORBA_TOPDIR)/src/*/share/classes \
-      $(JAXP_TOPDIR)/src/*/share/classes \
-      $(JAXWS_TOPDIR)/src/*/share/classes \
+      $(SRC_ROOT)/src/*/$(OPENJDK_TARGET_OS)/classes \
+      $(SRC_ROOT)/src/*/$(OPENJDK_TARGET_OS_TYPE)/classes \
+      $(SRC_ROOT)/src/*/share/classes \
       $(SUPPORT_OUTPUTDIR)/rmic/* \
-      $(JDK_TOPDIR)/src/*/share/doc/stub \
+      $(SRC_ROOT)/src/*/share/doc/stub \
       #
 
 
@@ -397,7 +385,7 @@ COREAPI_HEADER = \
 <strong>Java$(TRADEMARK)&nbsp;Platform<br>Standard&nbsp;Ed.&nbsp;$(VERSION_SPECIFICATION)</strong>
 
 # Overview file for core apis
-COREAPI_OVERVIEW = $(JDK_TOPDIR)/src/java.base/share/classes/overview-core.html
+COREAPI_OVERVIEW = $(SRC_ROOT)/src/java.base/share/classes/overview-core.html
 
 # The options and packages files
 COREAPI_OPTIONS_FILE = $(DOCSTMPDIR)/coredocs.options
@@ -622,7 +610,7 @@ $(TAGLETAPI_OPTIONS_FILE):
 # Create a file with the package names in it
 $(TAGLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(TAGLETAPI_PKGS))
 	$(prep-target)
-	@($(ECHO) "$(LANGTOOLS_TOPDIR)/src/jdk.javadoc/share/classes/$(TAGLETAPI_FILE)" ) > $@
+	@($(ECHO) "$(SRC_ROOT)/src/jdk.javadoc/share/classes/$(TAGLETAPI_FILE)" ) > $@
 
 #############################################################
 #
@@ -707,7 +695,7 @@ JDI_DOCTITLE := Java$(TRADEMARK) Debug Interface
 JDI_WINDOWTITLE := Java Debug Interface
 JDI_HEADER := <strong>Java Debug Interface</strong>
 JDI_BOTTOM := $(call CommonBottom,$(JDI_FIRST_COPYRIGHT_YEAR))
-JDI_OVERVIEW := $(JDK_TOPDIR)/src/jdk.jdi/share/classes/jdi-overview.html
+JDI_OVERVIEW := $(SRC_ROOT)/src/jdk.jdi/share/classes/jdi-overview.html
 # JDI_PKGS is located in NON_CORE_PKGS.gmk
 
 # The index.html, options, and packages files
@@ -801,7 +789,7 @@ JAAS_WINDOWTITLE := Java Authentication and Authorization Service
 JAAS_HEADER := <strong>Java Authentication and Authorization Service</strong>
 JAAS_BOTTOM := $(call CommonBottom,$(JAAS_FIRST_COPYRIGHT_YEAR))
 # JAAS_PKGS is located in NON_CORE_PKGS.gmk
-JAAS_OVERVIEW := $(JDK_TOPDIR)/src/jdk.security.auth/share/classes/jaas-overview.html
+JAAS_OVERVIEW := $(SRC_ROOT)/src/jdk.security.auth/share/classes/jaas-overview.html
 
 # The index.html, options, and packages files
 JAAS_INDEX_FILE = $(JAAS_DOCDIR)/index.html
@@ -859,7 +847,7 @@ JGSS_DOCTITLE := Java$(TRADEMARK) GSS-API Utilities
 JGSS_WINDOWTITLE := Java GSS-API Utilities
 JGSS_HEADER := <strong>Java GSS-API Utilities</strong>
 JGSS_BOTTOM := $(call CommonBottom,$(JGSS_FIRST_COPYRIGHT_YEAR))
-JGSS_OVERVIEW := $(JDK_TOPDIR)/src/java.security.jgss/share/classes/jgss-overview.html
+JGSS_OVERVIEW := $(SRC_ROOT)/src/java.security.jgss/share/classes/jgss-overview.html
 # JGSS_PKGS is located in NON_CORE_PKGS.gmk
 
 # The index.html, options, and packages files
@@ -1092,7 +1080,7 @@ MGMT_DOCTITLE := Monitoring and Management Interface for the Java$(TRADEMARK) Pl
 MGMT_WINDOWTITLE := Monitoring and Management Interface for the Java Platform
 MGMT_HEADER := <strong>Monitoring and Management Interface for the Java Platform</strong>
 MGMT_BOTTOM := $(call CommonBottom,$(MGMT_FIRST_COPYRIGHT_YEAR))
-MGMT_OVERVIEW := $(JDK_TOPDIR)/src/java.management/share/classes/mgmt-overview.html
+MGMT_OVERVIEW := $(SRC_ROOT)/src/java.management/share/classes/mgmt-overview.html
 # MGMT_PKGS is located in NON_CORE_PKGS.gmk
 
 # The index.html, options, and packages files
@@ -1266,7 +1254,7 @@ JSHELLAPI_DOCTITLE := JShell API
 JSHELLAPI_WINDOWTITLE := JShell API
 JSHELLAPI_HEADER := <strong>JSHELL API</strong>
 JSHELLAPI_BOTTOM := $(call CommonBottom,$(JSHELLAPI_FIRST_COPYRIGHT_YEAR))
-JSHELLAPI_OVERVIEW := $(LANGTOOLS_TOPDIR)/src/jdk.jshell/share/classes/jdk/jshell/overview.html
+JSHELLAPI_OVERVIEW := $(SRC_ROOT)/src/jdk.jshell/share/classes/jdk/jshell/overview.html
 # JSHELLAPI_PKGS is located in NON_CORE_PKGS.gmk
 
 JSHELLAPI_INDEX_HTML = $(JSHELLAPI_DOCDIR)/index.html

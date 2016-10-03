@@ -25,7 +25,7 @@
 
 include CopyCommon.gmk
 
-$(eval $(call IncludeCustomExtension, jdk, copy/Copy-java.base.gmk))
+$(eval $(call IncludeCustomExtension, , copy/Copy-java.base.gmk))
 
 ################################################################################
 #
@@ -39,18 +39,18 @@ TARGETS += \
     $(INCLUDE_DST_OS_DIR)/jni_md.h \
     #
 
-$(INCLUDE_DST_DIR)/%.h: $(JDK_TOPDIR)/src/java.base/share/native/include/%.h
+$(INCLUDE_DST_DIR)/%.h: $(SRC_ROOT)/src/java.base/share/native/include/%.h
 	$(call install-file)
 
 $(INCLUDE_DST_OS_DIR)/%.h: \
-    $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_EXPORT_DIR)/native/include/%.h
+    $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_EXPORT_DIR)/native/include/%.h
 	$(call install-file)
 
 ################################################################################
 
 ifneq ($(findstring $(OPENJDK_TARGET_OS), windows aix),)
 
-  TZMAPPINGS_SRC := $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/conf
+  TZMAPPINGS_SRC := $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS)/conf
 
   $(LIB_DST_DIR)/tzmappings: $(TZMAPPINGS_SRC)/tzmappings
 	$(call install-file)
@@ -95,9 +95,9 @@ else
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  JVMCFG_SRC := $(JDK_TOPDIR)/src/java.base/macosx/conf/$(JVMCFG_ARCH)/jvm.cfg
+  JVMCFG_SRC := $(SRC_ROOT)/src/java.base/macosx/conf/$(JVMCFG_ARCH)/jvm.cfg
 else
-  JVMCFG_SRC := $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/conf/$(JVMCFG_ARCH)/jvm.cfg
+  JVMCFG_SRC := $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/conf/$(JVMCFG_ARCH)/jvm.cfg
   # Allow override by ALT_JVMCFG_SRC if it exists
   JVMCFG_SRC := $(if $(wildcard $(ALT_JVMCFG_SRC)),$(ALT_JVMCFG_SRC),$(JVMCFG_SRC))
 endif
@@ -163,7 +163,7 @@ TARGETS += $(JVMCFG)
 
 ################################################################################
 
-POLICY_SRC := $(JDK_TOPDIR)/src/java.base/share/conf/security/java.policy
+POLICY_SRC := $(SRC_ROOT)/src/java.base/share/conf/security/java.policy
 POLICY_DST := $(CONF_DST_DIR)/security/java.policy
 
 POLICY_SRC_LIST := $(POLICY_SRC)
@@ -178,13 +178,13 @@ TARGETS += $(POLICY_DST)
 
 ################################################################################
 
-DEF_POLICY_SRC := $(JDK_TOPDIR)/src/java.base/share/lib/security/default.policy
+DEF_POLICY_SRC := $(SRC_ROOT)/src/java.base/share/lib/security/default.policy
 DEF_POLICY_DST := $(LIB_DST_DIR)/security/default.policy
 
 DEF_POLICY_SRC_LIST := $(DEF_POLICY_SRC)
 
 ifneq ($(filter $(OPENJDK_TARGET_OS), windows solaris), )
-  DEF_POLICY_SRC_LIST += $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/lib/security/default.policy
+  DEF_POLICY_SRC_LIST += $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS)/lib/security/default.policy
 endif
 
 # Allow imported modules to modify the java.policy
@@ -203,7 +203,7 @@ TARGETS += $(DEF_POLICY_DST)
 ################################################################################
 
 ifeq ($(CACERTS_FILE), )
-  CACERTS_FILE := $(JDK_TOPDIR)/src/java.base/share/lib/security/cacerts
+  CACERTS_FILE := $(SRC_ROOT)/src/java.base/share/lib/security/cacerts
 endif
 
 CACERTS_DST := $(LIB_DST_DIR)/security/cacerts
@@ -217,7 +217,7 @@ TARGETS += $(CACERTS_DST)
 ################################################################################
 
 $(eval $(call SetupCopyFiles, COPY_NET_PROPERTIES, \
-    FILES := $(JDK_TOPDIR)/src/java.base/share/conf/net.properties, \
+    FILES := $(SRC_ROOT)/src/java.base/share/conf/net.properties, \
     DEST := $(CONF_DST_DIR), \
 ))
 
@@ -225,7 +225,7 @@ TARGETS += $(COPY_NET_PROPERTIES)
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   $(eval $(call SetupCopyFiles, COPY_SDP_CONF, \
-      FILES := $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/conf/sdp/sdp.conf.template, \
+      FILES := $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/conf/sdp/sdp.conf.template, \
       DEST := $(CONF_DST_DIR)/sdp, \
   ))
 

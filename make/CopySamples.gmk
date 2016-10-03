@@ -31,8 +31,8 @@ include MakeBase.gmk
 ################################################################################
 
 SAMPLE_TARGET_DIR := $(SUPPORT_OUTPUTDIR)/sample/image
-SAMPLE_SOURCE_DIR := $(JDK_TOPDIR)/src/sample/share
-SAMPLE_SOLARIS_SOURCE_DIR := $(JDK_TOPDIR)/src/sample/solaris
+SAMPLE_SOURCE_DIR := $(SRC_ROOT)/src/sample/share
+SAMPLE_SOLARIS_SOURCE_DIR := $(SRC_ROOT)/src/sample/solaris
 
 # Exclude the vm directory
 $(eval $(call SetupCopyFiles, COPY_SHARE_SAMPLES, \
@@ -56,7 +56,7 @@ endif
 
 ################################################################################
 
-$(eval $(call IncludeCustomExtension, jdk, CopySamples.gmk))
+$(eval $(call IncludeCustomExtension, , CopySamples.gmk))
 
 ################################################################################
 

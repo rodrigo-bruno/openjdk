@@ -31,7 +31,7 @@ default: all
 
 include $(SPEC)
 include MakeBase.gmk
-include Tools.gmk
+include ToolsJdk.gmk
 include JarArchive.gmk
 
 ################################################################################

@@ -46,7 +46,7 @@ BREAK_ITERATOR_CLASSES := $(BUILDTOOLS_OUTPUTDIR)/break_iterator_classes
 # These two files should be moved out to a build tool!
 $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_BASE, \
     SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
+    SRC := $(SRC_ROOT)/src/java.base/share/classes, \
     INCLUDE_FILES := \
         $(TEXT_PKG)/BreakIteratorRules.java \
         $(TEXT_PKG)/BreakIteratorInfo.java, \
@@ -54,7 +54,7 @@ $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_BASE, \
 
 $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_LD, \
     SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/jdk.localedata/share/classes, \
+    SRC := $(SRC_ROOT)/src/jdk.localedata/share/classes, \
     INCLUDES := $(TEXT_PKG_LD), \
     INCLUDE_FILES := \
         $(TEXT_PKG_LD)/BreakIteratorRules_th.java \

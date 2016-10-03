@@ -47,7 +47,7 @@ java.base_COPY := .icu .dat .spp content-types.properties hijrah-config-islamic-
 java.base_CLEAN := intrinsic.properties
 
 java.base_EXCLUDE_FILES += \
-  $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/module/ModuleLoaderMap.java
+  $(SRC_ROOT)/src/java.base/share/classes/jdk/internal/module/ModuleLoaderMap.java
 
 java.base_EXCLUDES += java/lang/doc-files
 
@@ -145,10 +145,10 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       com/sun/java/swing/plaf/gtk \
       #
   java.desktop_EXCLUDE_FILES += \
-      $(wildcard $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/java2d/*.java) \
-      $(wildcard $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/java2d/opengl/*.java) \
-      $(wildcard $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/awt/*.java) \
-      $(wildcard $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/font/*.java) \
+      $(wildcard $(SRC_ROOT)/src/java.desktop/unix/classes/sun/java2d/*.java) \
+      $(wildcard $(SRC_ROOT)/src/java.desktop/unix/classes/sun/java2d/opengl/*.java) \
+      $(wildcard $(SRC_ROOT)/src/java.desktop/unix/classes/sun/awt/*.java) \
+      $(wildcard $(SRC_ROOT)/src/java.desktop/unix/classes/sun/font/*.java) \
       #
 else
   # TBD: figure out how to eliminate this long list
@@ -262,15 +262,15 @@ java.sql_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 
 java.sql.rowset_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
 java.sql.rowset_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/com/sun/rowset/*.properties \
-    $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
+    $(SRC_ROOT)/src/java.sql.rowset/share/classes/com/sun/rowset/*.properties \
+    $(SRC_ROOT)/src/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
 
 java.rmi_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
 java.rmi_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
-    $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
+    $(SRC_ROOT)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
+    $(SRC_ROOT)/src/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
 
 ################################################################################
 
@@ -344,10 +344,11 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' \
+jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected \
+    '-Xdoclint/package:-com.sun.tools.*,sun.tools.serialver.resources.*' \
     -XDstringConcat=inline
 jdk.compiler_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
+    $(patsubst %, $(SRC_ROOT)/src/jdk.compiler/share/classes/%/*.properties, \
         sun/tools/serialver/resources))
 
 ################################################################################
@@ -380,17 +381,17 @@ jdk.rmic_CLEAN := .properties
 
 # No SCTP implementation on Mac OS X or AIX. These classes should be excluded.
 SCTP_IMPL_CLASSES = \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/AssociationChange.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/AssociationImpl.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/PeerAddrChange.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/ResultContainer.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpNet.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpNotification.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SendFailed.java \
-    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/Shutdown.java
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/AssociationChange.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/AssociationImpl.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/PeerAddrChange.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/ResultContainer.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpNet.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpNotification.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SendFailed.java \
+    $(SRC_ROOT)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/Shutdown.java
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   jdk.sctp_EXCLUDE_FILES += $(SCTP_IMPL_CLASSES)
@@ -405,15 +406,11 @@ endif
 jdk.jconsole_COPY := .gif .png
 
 jdk.jconsole_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/src/jdk.jconsole/share/classes/sun/tools/jconsole/resources/*.properties)
+    $(SRC_ROOT)/src/jdk.jconsole/share/classes/sun/tools/jconsole/resources/*.properties)
 
 ################################################################################
 
 jdk.jdeps_COPY := .txt
-
-jdk.jdeps_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/src/jdk.jdeps/share/classes/com/sun/tools/jdeps/resources/*.properties \
-    $(JDK_TOPDIR)/src/jdk.jdeps/share/classes/com/sun/tools/javap/resources/*.properties)
 
 ################################################################################
 
@@ -429,7 +426,7 @@ jdk.jdi_EXCLUDE_FILES += jdi-overview.html
 ################################################################################
 
 jdk.dev_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/src/jdk.dev/share/classes/%/*.properties, \
+    $(patsubst %, $(SRC_ROOT)/src/jdk.dev/share/classes/%/*.properties, \
         com/sun/tools/script/shell))
 
 jdk.dev_COPY := .js oqlhelp.html .txt
@@ -488,7 +485,7 @@ ifeq ($(MODULE), jdk.vm.ci)
   ## WORKAROUND jdk.vm.ci source structure issue
   JVMCI_MODULESOURCEPATH := $(MODULESOURCEPATH) \
       $(subst /$(MODULE)/,/*/, $(filter-out %processor/src, \
-          $(wildcard $(HOTSPOT_TOPDIR)/src/jdk.vm.ci/share/classes/*/src)))
+          $(wildcard $(SRC_ROOT)/src/jdk.vm.ci/share/classes/*/src)))
   MODULESOURCEPATH := $(call PathList, $(JVMCI_MODULESOURCEPATH))
 endif
 
@@ -525,7 +522,7 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 	$(install-file)
 
 CreateHkTargets = \
-    $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules/%, \
+    $(patsubst $(SRC_ROOT)/src/%, $(JDK_OUTPUTDIR)/modules/%, \
       $(subst /share/classes,, \
         $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 

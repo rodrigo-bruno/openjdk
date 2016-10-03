@@ -25,10 +25,10 @@
 
 include LauncherCommon.gmk
 
-$(eval $(call IncludeCustomExtension, jdk, launcher/Launcher-java.base.gmk))
+$(eval $(call IncludeCustomExtension, , launcher/Launcher-java.base.gmk))
 
-JAVA_RC_FLAGS += -I $(JDK_TOPDIR)/src/java.base/windows/native/common
-JAVA_RC_FLAGS += -I $(JDK_TOPDIR)/src/java.base/windows/native/launcher/icons
+JAVA_RC_FLAGS += -I $(SRC_ROOT)/src/java.base/windows/native/common
+JAVA_RC_FLAGS += -I $(SRC_ROOT)/src/java.base/windows/native/launcher/icons
 
 ################################################################################
 
@@ -101,14 +101,14 @@ ifeq ($(BUILD_JEXEC), 1)
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
-    BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/java.base/macosx/native/launcher
+    BUILD_JEXEC_SRC := $(SRC_ROOT)/src/java.base/macosx/native/launcher
   else
-    BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/java.base/unix/native/launcher
+    BUILD_JEXEC_SRC := $(SRC_ROOT)/src/java.base/unix/native/launcher
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
     BUILD_JEXEC_DST_DIR := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base
-    BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/java.base/share/native/libjli
+    BUILD_JEXEC_INC += -I$(SRC_ROOT)/src/java.base/share/native/libjli
   endif
 endif
 
@@ -136,8 +136,8 @@ endif
 ################################################################################
 
 BUILD_JSPAWNHELPER :=
-BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/java.base/unix/native/jspawnhelper
-JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/src/java.base/unix/native/libjava
+BUILD_JSPAWNHELPER_SRC := $(SRC_ROOT)/src/java.base/unix/native/jspawnhelper
+JSPAWNHELPER_CFLAGS := -I$(SRC_ROOT)/src/java.base/unix/native/libjava
 BUILD_JSPAWNHELPER_DST_DIR := $(SUPPORT_OUTPUTDIR)/modules_libs/java.base$(OPENJDK_TARGET_CPU_LIBDIR)
 LINK_JSPAWNHELPER_OBJECTS := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libjava/childproc.o
 BUILD_JSPAWNHELPER_LDFLAGS :=

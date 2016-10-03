@@ -23,17 +23,17 @@
 # questions.
 #
 
-include GensrcCommon.gmk
+include GensrcCommonJdk.gmk
 
 # Hook to include the corresponding custom file, if present.
-$(eval $(call IncludeCustomExtension, jdk, gensrc/Gensrc-java.management.gmk))
+$(eval $(call IncludeCustomExtension, , gensrc/Gensrc-java.management.gmk))
 
 ################################################################################
 
 include GensrcProperties.gmk
 
 $(eval $(call SetupCompileProperties, COMPILE_PROPERTIES, \
-    SRC_DIRS := $(JDK_TOPDIR)/src/java.management/share/classes/sun/management/resources, \
+    SRC_DIRS := $(SRC_ROOT)/src/java.management/share/classes/sun/management/resources, \
     CLASS := ListResourceBundle, \
 ))
 

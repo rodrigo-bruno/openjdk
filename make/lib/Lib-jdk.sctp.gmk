@@ -36,11 +36,11 @@ ifeq ($(OPENJDK_TARGET_OS_TYPE), unix)
     $(eval $(call SetupNativeCompilation,BUILD_LIBSCTP, \
         LIBRARY := sctp, \
         OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-        SRC := $(JDK_TOPDIR)/src/jdk.sctp/$(OPENJDK_TARGET_OS_TYPE)/native/libsctp, \
+        SRC := $(SRC_ROOT)/src/jdk.sctp/$(OPENJDK_TARGET_OS_TYPE)/native/libsctp, \
         OPTIMIZATION := LOW, \
         CFLAGS := $(CFLAGS_JDKLIB) \
-            -I $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libnio/ch \
-            -I $(JDK_TOPDIR)/src/java.base/share/native/libnio/ch \
+            -I $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libnio/ch \
+            -I $(SRC_ROOT)/src/java.base/share/native/libnio/ch \
             $(addprefix -I, $(call FindSrcDirsForLib, java.base, net)) \
             $(LIBJAVA_HEADER_FLAGS) \
             -I$(SUPPORT_OUTPUTDIR)/headers/jdk.sctp \

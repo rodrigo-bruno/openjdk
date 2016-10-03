@@ -38,8 +38,8 @@ include TextFileProcessing.gmk
 include ZipArchive.gmk
 
 # Prepare the find cache.
-$(eval $(call FillCacheFind, $(wildcard $(JDK_TOPDIR)/src/demo \
-    $(JDK_TOPDIR)/src/*/demo)))
+$(eval $(call FillCacheFind, $(wildcard $(SRC_ROOT)/src/demo \
+    $(SRC_ROOT)/src/*/demo)))
 
 # Append demo goals to this variable.
 TARGETS =
@@ -48,8 +48,8 @@ TARGETS =
 # Now every other demo has its own quirks where to put the
 # READMEs and other files.
 
-DEMO_SHARE_SRC := $(JDK_TOPDIR)/src/demo/share
-GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/java.base/windows/native/common/version.rc
+DEMO_SHARE_SRC := $(SRC_ROOT)/src/demo/share
+GLOBAL_VERSION_INFO_RESOURCE := $(SRC_ROOT)/src/java.base/windows/native/common/version.rc
 
 DEMO_MANIFEST := $(SUPPORT_OUTPUTDIR)/demos/java-main-manifest.mf
 
@@ -427,7 +427,7 @@ $(eval $(call SetupBuildJvmtiDemo, waiters, \
 # Build the Poller demo (on Solaris only).
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
-  DEMO_SOLARIS_SRC := $(JDK_TOPDIR)/src/demo/solaris
+  DEMO_SOLARIS_SRC := $(SRC_ROOT)/src/demo/solaris
 
   $(eval $(call SetupJavaCompilation, BUILD_DEMO_JAVA_Poller, \
       SETUP := GENERATE_USINGJDKBYTECODE, \
@@ -516,7 +516,7 @@ endif
 ################################################################################
 
 # Hook to include the corresponding custom file, if present.
-$(eval $(call IncludeCustomExtension, jdk, CompileDemos.gmk))
+$(eval $(call IncludeCustomExtension, , CompileDemos.gmk))
 
 all: $(TARGETS)
 

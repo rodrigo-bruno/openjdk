@@ -25,7 +25,7 @@
 
 include NativeCompilation.gmk
 
-$(eval $(call IncludeCustomExtension, hotspot, lib/Lib-jdk.hotspot.agent.gmk))
+$(eval $(call IncludeCustomExtension, , lib/Lib-jdk.hotspot.agent.gmk))
 
 ################################################################################
 
@@ -33,7 +33,7 @@ ifneq ($(findstring $(OPENJDK_TARGET_OS), macosx windows), )
   DISABLE_MAPFILES := true
 endif
 
-SA_TOPDIR := $(HOTSPOT_TOPDIR)/src/jdk.hotspot.agent
+SA_TOPDIR := $(SRC_ROOT)/src/jdk.hotspot.agent
 
 # Defaults for most platforms
 SA_TOOLCHAIN := TOOLCHAIN_DEFAULT

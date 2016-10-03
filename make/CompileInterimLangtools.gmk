@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ define SetupInterimModule
   $$(eval $$(call SetupJavaCompilation,BUILD_INTERIM_$(strip $1), \
       SETUP := BOOT_JAVAC, \
       DISABLE_SJAVAC := true, \
-      SRC := $(LANGTOOLS_TOPDIR)/src/$(strip $1)/share/classes \
+      SRC := $(SRC_ROOT)/src/$(strip $1)/share/classes \
           $$(wildcard $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)), \
       EXCLUDES := sun com/sun/tools/jdeps com/sun/tools/javap \
           com/sun/tools/jdeprscan, \

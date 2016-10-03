@@ -120,9 +120,7 @@ endef
 
 ################################################################################
 
-MAKE_TOPDIR_LIST := $(JDK_TOPDIR) $(CORBA_TOPDIR) $(LANGTOOLS_TOPDIR) \
-    $(HOTSPOT_TOPDIR)
-MAKE_MAKEDIR_LIST := make
+PHASE_MAKEDIRS := $(SRC_ROOT)/make
 
 # Helper macro for DeclareRecipesForPhase
 # Declare a recipe for calling the module and phase specific makefile.
@@ -133,30 +131,25 @@ MAKE_MAKEDIR_LIST := make
 # $module-$suffix
 # Param 1: Name of list to add targets to
 # Param 2: Module name
-# Param 3: Topdir
 define DeclareRecipeForModuleMakefile
-  ifeq ($$($1_MULTIPLE_MAKEFILES), true)
-    $2-$$($1_TARGET_SUFFIX): $2-$$($1_TARGET_SUFFIX)-$$(notdir $3)
-    $1 += $2-$$($1_TARGET_SUFFIX)-$$(notdir $3)
-
-    $2-$$($1_TARGET_SUFFIX)-$$(notdir $3):
-  else
-    $2-$$($1_TARGET_SUFFIX):
-  endif
+  $2-$$($1_TARGET_SUFFIX):
         ifeq ($$($1_USE_WRAPPER), true)
 	  +($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) \
 	      -f ModuleWrapper.gmk \
-	          $$(addprefix -I, $$(wildcard $$(addprefix $3/, $(MAKE_MAKEDIR_LIST)) \
-	          $$(addsuffix /$$($1_MAKE_SUBDIR), $$(addprefix $3/, $(MAKE_MAKEDIR_LIST))))) \
-	          MODULE=$2 MAKEFILE_PREFIX=$$($1_FILE_PREFIX))
+	      $$(addprefix -I, $$(PHASE_MAKEDIRS) \
+	          $$(addsuffix /$$($1_MAKE_SUBDIR), $$(PHASE_MAKEDIRS)) \
+	      ) \
+	      MODULE=$2 MAKEFILE_PREFIX=$$($1_FILE_PREFIX))
         else
-	  +($(CD) $$(dir $$(firstword $$(wildcard $$(patsubst %, \
-	          $3/%/$$($1_MAKE_SUBDIR)/$$($1_FILE_PREFIX)-$2.gmk, $(MAKE_MAKEDIR_LIST))))) \
-	    && $(MAKE) $(MAKE_ARGS) \
-	          -f $$($1_FILE_PREFIX)-$2.gmk \
-	          $$(addprefix -I, $$(wildcard $$(addprefix $3/, $(MAKE_MAKEDIR_LIST)) \
-	          $$(addsuffix /$$($1_MAKE_SUBDIR), $$(addprefix $3/, $(MAKE_MAKEDIR_LIST))))) \
-	          MODULE=$2)
+	  +($(CD) $$(dir $$(firstword $$(wildcard $$(addsuffix \
+	      /$$($1_MAKE_SUBDIR)/$$($1_FILE_PREFIX)-$2.gmk, $$(PHASE_MAKEDIRS))))) \
+	  && $(MAKE) $(MAKE_ARGS) \
+	      -f $$($1_FILE_PREFIX)-$2.gmk \
+	      $$(addprefix -I, $$(PHASE_MAKEDIRS) \
+	          $$(addsuffix /$$($1_MAKE_SUBDIR), $$(PHASE_MAKEDIRS)) \
+	      ) \
+	      MODULE=$2 \
+	  )
         endif
 
 endef
@@ -165,17 +158,13 @@ endef
 # Param 1: Name of list to add targets to
 # Param 2: Module name
 define DeclareRecipesForPhaseAndModule
-  $1_$2_TOPDIRS := $$(strip $$(sort $$(foreach d, $(MAKE_TOPDIR_LIST), \
-      $$(patsubst $$d/%, $$d, $$(filter $$d/%, \
-          $$(wildcard $$(patsubst %, %/$$($1_MAKE_SUBDIR)/$$($1_FILE_PREFIX)-$2.gmk, \
-          $$(foreach s, $(MAKE_MAKEDIR_LIST), \
-              $$(addsuffix /$$s, $(MAKE_TOPDIR_LIST))))))))))
+  $1_$2_MAKEFILES := $$(strip $$(wildcard \
+      $$(addsuffix /$$($1_MAKE_SUBDIR)/$$($1_FILE_PREFIX)-$2.gmk, $$(PHASE_MAKEDIRS))))
 
   # Only declare recipes if there are makefiles to call
-  ifneq ($$($1_$2_TOPDIRS), )
+  ifneq ($$($1_$2_MAKEFILES), )
     ifeq ($(NO_RECIPES),)
-      $$(foreach d, $$($1_$2_TOPDIRS), \
-          $$(eval $$(call DeclareRecipeForModuleMakefile,$1,$2,$$d)))
+      $$(eval $$(call DeclareRecipeForModuleMakefile,$1,$2))
     endif
     $1 += $2-$$($1_TARGET_SUFFIX)
     $1_MODULES += $2
@@ -197,7 +186,7 @@ endef
 # $1_MODULES : All modules that had rules generated
 # $1_TARGETS : All targets generated
 define DeclareRecipesForPhase
-  $(foreach i,2 3 4 5 6 7, $(if $($i),$(strip $1)_$(strip $($i)))$(NEWLINE))
+  $(foreach i,2 3 4 5 6 7, $(if $(strip $($i)),$(strip $1)_$(strip $($i)))$(NEWLINE))
   $(if $(8),$(error Internal makefile error: Too many arguments to \
       DeclareRecipesForPhase, please update MakeHelper.gmk))
 

@@ -24,8 +24,8 @@
 #
 
 LIBJSOUND_SRC_DIRS := \
-    $(JDK_TOPDIR)/src/java.desktop/share/native/libjsound \
-    $(JDK_TOPDIR)/src/java.desktop/$(OPENJDK_TARGET_OS_TYPE)/native/libjsound \
+    $(SRC_ROOT)/src/java.desktop/share/native/libjsound \
+    $(SRC_ROOT)/src/java.desktop/$(OPENJDK_TARGET_OS_TYPE)/native/libjsound \
     #
 LIBJSOUND_CFLAGS := \
     -I$(SUPPORT_OUTPUTDIR)/headers/java.desktop \
@@ -85,7 +85,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       -DUSE_DAUDIO=TRUE \
       -DUSE_PLATFORM_MIDI_OUT=TRUE \
       -DUSE_PLATFORM_MIDI_IN=TRUE
-  LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/src/java.desktop/macosx/native/libjsound
+  LIBJSOUND_SRC_DIRS += $(SRC_ROOT)/src/java.desktop/macosx/native/libjsound
   LIBJSOUND_SRC_FILES += \
       PLATFORM_API_MacOSX_Utils.cpp \
       PLATFORM_API_MacOSX_PCM.cpp \

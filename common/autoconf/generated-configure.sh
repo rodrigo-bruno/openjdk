@@ -1149,6 +1149,7 @@ with_toolchain_path
 with_extra_path
 with_sdk_name
 with_conf_name
+with_output_base_dir
 with_output_sync
 with_default_make_target
 enable_headless_only
@@ -2043,6 +2044,7 @@ Optional Packages:
   --with-sdk-name         use the platform SDK of the given name. [macosx]
   --with-conf-name        use this as the name of the configuration [generated
                           from important configuration options]
+  --with-output-base-dir  override the default output base directory [./build]
   --with-output-sync      set make output sync type if supported by make.
                           [recurse]
   --with-default-make-target
@@ -5092,7 +5094,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1474894604
+DATE_WHEN_GENERATED=1475487054
 
 ###############################################################################
 #
@@ -17235,6 +17237,14 @@ if test "${with_conf_name+set}" = set; then :
 fi
 
 
+# Check whether --with-output-base-dir was given.
+if test "${with_output_base_dir+set}" = set; then :
+  withval=$with_output_base_dir;  OUTPUT_BASE=${with_output_base_dir}
+else
+   OUTPUT_BASE="$SRC_ROOT/build"
+fi
+
+
   # Test from where we are running configure, in or outside of src root.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking where to store configuration" >&5
 $as_echo_n "checking where to store configuration... " >&6; }
@@ -17251,7 +17261,7 @@ $as_echo "in default location" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: in build directory with custom name" >&5
 $as_echo "in build directory with custom name" >&6; }
     fi
-    OUTPUT_ROOT="$SRC_ROOT/build/${CONF_NAME}"
+    OUTPUT_ROOT="${OUTPUT_BASE}/${CONF_NAME}"
     $MKDIR -p "$OUTPUT_ROOT"
     if test ! -d "$OUTPUT_ROOT"; then
       as_fn_error $? "Could not create build directory $OUTPUT_ROOT" "$LINENO" 5
@@ -50265,11 +50275,11 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
   # Setup some hard coded includes
   COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK \
-      -I${JDK_TOPDIR}/src/java.base/share/native/include \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS/native/include \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/include \
-      -I${JDK_TOPDIR}/src/java.base/share/native/libjava \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/libjava"
+      -I${SRC_ROOT}/src/java.base/share/native/include \
+      -I${SRC_ROOT}/src/java.base/$OPENJDK_TARGET_OS/native/include \
+      -I${SRC_ROOT}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/include \
+      -I${SRC_ROOT}/src/java.base/share/native/libjava \
+      -I${SRC_ROOT}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/libjava"
 
   # The shared libraries are compiled using the picflag.
   CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK \
@@ -51080,11 +51090,11 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
   # Setup some hard coded includes
   OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK \
-      -I${JDK_TOPDIR}/src/java.base/share/native/include \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_BUILD_OS/native/include \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_BUILD_OS_TYPE/native/include \
-      -I${JDK_TOPDIR}/src/java.base/share/native/libjava \
-      -I${JDK_TOPDIR}/src/java.base/$OPENJDK_BUILD_OS_TYPE/native/libjava"
+      -I${SRC_ROOT}/src/java.base/share/native/include \
+      -I${SRC_ROOT}/src/java.base/$OPENJDK_BUILD_OS/native/include \
+      -I${SRC_ROOT}/src/java.base/$OPENJDK_BUILD_OS_TYPE/native/include \
+      -I${SRC_ROOT}/src/java.base/share/native/libjava \
+      -I${SRC_ROOT}/src/java.base/$OPENJDK_BUILD_OS_TYPE/native/libjava"
 
   # The shared libraries are compiled using the picflag.
   OPENJDK_BUILD_CFLAGS_JDKLIB="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK \
@@ -63881,7 +63891,7 @@ $as_echo "no, not found at $STLPORT_LIB" >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if elliptic curve crypto implementation is present" >&5
 $as_echo_n "checking if elliptic curve crypto implementation is present... " >&6; }
 
-  if test -d "${SRC_ROOT}/jdk/src/jdk.crypto.ec/share/native/libsunec/impl"; then
+  if test -d "${SRC_ROOT}/src/jdk.crypto.ec/share/native/libsunec/impl"; then
     ENABLE_INTREE_EC=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }

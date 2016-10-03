@@ -32,7 +32,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   $(eval $(call SetupNativeCompilation, BUILD_LIBEXTNET, \
       LIBRARY := extnet, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/jdk.net/solaris/native/libextnet, \
+      SRC := $(SRC_ROOT)/src/jdk.net/solaris/native/libextnet, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) -I$(SUPPORT_OUTPUTDIR)/headers/jdk.net, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libextnet/mapfile-vers, \

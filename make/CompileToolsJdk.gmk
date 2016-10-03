@@ -42,9 +42,9 @@ $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
 TARGETS += $(BUILD_TOOLS_JDK)
 
 $(eval $(call SetupCopyFiles,COPY_NIMBUS_TEMPLATES, \
-    SRC := $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus, \
+    SRC := $(SRC_ROOT)/src/java.desktop/share/classes/javax/swing/plaf/nimbus, \
     DEST := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes/build/tools/generatenimbus/resources, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/*.template)))
+    FILES := $(wildcard $(SRC_ROOT)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/*.template)))
 
 TARGETS += $(COPY_NIMBUS_TEMPLATES)
 

@@ -26,13 +26,13 @@
 include LibCommon.gmk
 
 # Hook to include the corresponding custom file, if present.
-$(eval $(call IncludeCustomExtension, jdk, lib/Lib-java.management.gmk))
+$(eval $(call IncludeCustomExtension, , lib/Lib-java.management.gmk))
 
 ################################################################################
 
-LIBMANAGEMENT_SRC += $(JDK_TOPDIR)/src/java.management/share/native/libmanagement \
-    $(JDK_TOPDIR)/src/java.management/$(OPENJDK_TARGET_OS_TYPE)/native/libmanagement
-LIBMANAGEMENT_CFLAGS := -I$(JDK_TOPDIR)/src/java.management/share/native/include \
+LIBMANAGEMENT_SRC += $(SRC_ROOT)/src/java.management/share/native/libmanagement \
+    $(SRC_ROOT)/src/java.management/$(OPENJDK_TARGET_OS_TYPE)/native/libmanagement
+LIBMANAGEMENT_CFLAGS := -I$(SRC_ROOT)/src/java.management/share/native/include \
     $(addprefix -I,$(LIBMANAGEMENT_SRC)) \
     -I$(SUPPORT_OUTPUTDIR)/headers/java.management \
     $(LIBJAVA_HEADER_FLAGS) \

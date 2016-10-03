@@ -830,6 +830,14 @@ DEMOS_BUNDLE :=  $(BUNDLES_OUTPUTDIR)/$(DEMOS_BUNDLE_NAME)
 TEST_BUNDLE :=  $(BUNDLES_OUTPUTDIR)/$(TEST_BUNDLE_NAME)
 DOCS_BUNDLE :=  $(BUNDLES_OUTPUTDIR)/$(DOCS_BUNDLE_NAME)
 
+CONFIGURE_CMD := $(TOPDIR)/configure
+
+JDK_MAKEDIR := $(JDK_TOPDIR)/make
+HOTSPOT_MAKEDIR := $(HOTSPOT_TOPDIR)/make
+LANGTOOLS_MAKEDIR := $(LANGTOOLS_TOPDIR)/make
+NASHORN_MAKEDIR := $(NASHORN_TOPDIR)/make
+CORBA_MAKEDIR := $(CORBA_TOPDIR)/make
+
 # This macro is called to allow inclusion of closed source counterparts.
 # Unless overridden in closed sources, it expands to nothing.
 # Usage: This function is called in an open makefile, with the following

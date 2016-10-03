@@ -28,7 +28,7 @@
 # string and the runtime name into the VersionProps.java file.
 
 $(eval $(call SetupTextFileProcessing, BUILD_VERSION_JAVA, \
-    SOURCE_FILES := $(JDK_TOPDIR)/src/java.base/share/classes/java/lang/VersionProps.java.template, \
+    SOURCE_FILES := $(SRC_ROOT)/src/java.base/share/classes/java/lang/VersionProps.java.template, \
     OUTPUT_FILE := $(SUPPORT_OUTPUTDIR)/gensrc/java.base/java/lang/VersionProps.java, \
     REPLACEMENTS := \
         @@LAUNCHER_NAME@@ => $(LAUNCHER_NAME) ; \
@@ -74,7 +74,7 @@ endef
 GENSRC_SOR_FILE += $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/nio/ch/SocketOptionRegistry.java
 
 $(GENSRC_SOR_FILE): \
-    $(JDK_TOPDIR)/src/java.base/share/classes/sun/nio/ch/SocketOptionRegistry.java.template
+    $(SRC_ROOT)/src/java.base/share/classes/sun/nio/ch/SocketOptionRegistry.java.template
 	$(generate-preproc-src)
 
 GENSRC_JAVA_BASE += $(GENSRC_SOR_FILE)
@@ -86,7 +86,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
   GENSRC_UC_FILE := $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/nio/fs/UnixConstants.java
 
   $(GENSRC_UC_FILE): \
-      $(JDK_TOPDIR)/src/java.base/unix/classes/sun/nio/fs/UnixConstants.java.template
+      $(SRC_ROOT)/src/java.base/unix/classes/sun/nio/fs/UnixConstants.java.template
 	$(generate-preproc-src)
 
   GENSRC_JAVA_BASE += $(GENSRC_UC_FILE)
@@ -100,7 +100,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   GENSRC_SC_FILE := $(SUPPORT_OUTPUTDIR)/gensrc/java.base/sun/nio/fs/SolarisConstants.java
 
   $(GENSRC_SC_FILE): \
-      $(JDK_TOPDIR)/src/java.base/solaris/classes/sun/nio/fs/SolarisConstants.java.template
+      $(SRC_ROOT)/src/java.base/solaris/classes/sun/nio/fs/SolarisConstants.java.template
 	$(generate-preproc-src)
 
   GENSRC_JAVA_BASE += $(GENSRC_SC_FILE)

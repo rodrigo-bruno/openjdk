@@ -26,7 +26,7 @@
 WIN_VERIFY_LIB := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libverify/verify.lib
 
 # Hook to include the corresponding custom file, if present.
-$(eval $(call IncludeCustomExtension, jdk, lib/CoreLibraries.gmk))
+$(eval $(call IncludeCustomExtension, , lib/CoreLibraries.gmk))
 
 
 ##########################################################################################
@@ -39,7 +39,7 @@ ifneq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LIBFDLIBM_OPTIMIZATION := NONE
 endif
 
-LIBFDLIBM_SRC := $(JDK_TOPDIR)/src/java.base/share/native/libfdlibm
+LIBFDLIBM_SRC := $(SRC_ROOT)/src/java.base/share/native/libfdlibm
 LIBFDLIBM_CFLAGS := -I$(LIBFDLIBM_SRC)
 
 ifneq ($(OPENJDK_TARGET_OS), macosx)
@@ -94,7 +94,7 @@ endif
 $(eval $(call SetupNativeCompilation,BUILD_LIBVERIFY, \
     LIBRARY := verify, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/native/libverify, \
+    SRC := $(SRC_ROOT)/src/java.base/share/native/libverify, \
     OPTIMIZATION := $(LIBVERIFY_OPTIMIZATION), \
     CFLAGS := $(CFLAGS_JDKLIB), \
     DISABLED_WARNINGS_microsoft := 4244 4267, \
@@ -119,7 +119,7 @@ TARGETS += $(BUILD_LIBVERIFY)
 LIBJAVA_SRC_DIRS := $(call FindSrcDirsForLib, java.base, java)
 
 LIBJAVA_CFLAGS := $(addprefix -I, $(LIBJAVA_SRC_DIRS)) \
-    -I$(JDK_TOPDIR)/src/java.base/share/native/libfdlibm \
+    -I$(SRC_ROOT)/src/java.base/share/native/libfdlibm \
     -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
     -DARCHPROPNAME='"$(OPENJDK_TARGET_CPU_OSARCH)"'
 
@@ -204,12 +204,12 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
     LIBRARY := zip, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     OPTIMIZATION := LOW, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/native/libzip, \
+    SRC := $(SRC_ROOT)/src/java.base/share/native/libzip, \
     EXCLUDES := $(LIBZIP_EXCLUDES), \
     CFLAGS := $(CFLAGS_JDKLIB) \
         $(ZLIB_CPPFLAGS) \
-        -I$(JDK_TOPDIR)/src/java.base/share/native/libjava \
-        -I$(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjava \
+        -I$(SRC_ROOT)/src/java.base/share/native/libjava \
+        -I$(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjava \
         -I$(SUPPORT_OUTPUTDIR)/headers/java.base, \
     CFLAGS_unix := $(BUILD_LIBZIP_MMAP) -UDEBUG, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libzip/mapfile-vers, \
@@ -241,9 +241,9 @@ ifeq ($(OPENJDK_TARGET_OS), aix)
 endif # OPENJDK_TARGET_OS aix
 
 JIMAGELIB_CPPFLAGS := \
-    -I$(JDK_TOPDIR)/src/java.base/share/native/libjava \
-    -I$(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjava \
-    -I$(JDK_TOPDIR)/src/java.base/share/native/libjimage \
+    -I$(SRC_ROOT)/src/java.base/share/native/libjava \
+    -I$(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjava \
+    -I$(SRC_ROOT)/src/java.base/share/native/libjimage \
     -I$(SUPPORT_OUTPUTDIR)/headers/java.base \
     #
 
@@ -252,8 +252,8 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJIMAGE, \
     TOOLCHAIN := $(LIBJIMAGE_TOOLCHAIN), \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     OPTIMIZATION := LOW, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/native/libjimage \
-        $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjimage, \
+    SRC := $(SRC_ROOT)/src/java.base/share/native/libjimage \
+        $(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjimage, \
     EXCLUDES := $(LIBJIMAGE_EXCLUDES), \
     CFLAGS := $(CFLAGS_JDKLIB) $(JIMAGELIB_CPPFLAGS), \
     CXXFLAGS := $(CXXFLAGS_JDKLIB) $(JIMAGELIB_CPPFLAGS), \
@@ -334,7 +334,7 @@ LIBJLI_CFLAGS += $(OPENJDK_TARGET_CPU_JLI_CFLAGS)
 ifneq ($(USE_EXTERNAL_LIBZ), true)
   LIBJLI_CFLAGS += $(ZLIB_CPPFLAGS)
   LIBJLI_EXTRA_FILES += \
-      $(addprefix $(JDK_TOPDIR)/src/java.base/share/native/libzip/zlib-1.2.8/, \
+      $(addprefix $(SRC_ROOT)/src/java.base/share/native/libzip/zlib-1.2.8/, \
           inflate.c \
           inftrees.c \
           inffast.c \

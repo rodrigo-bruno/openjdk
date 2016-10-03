@@ -42,16 +42,16 @@ else
   endif
 endif
 
-LAUNCHER_SRC := $(JDK_TOPDIR)/src/java.base/share/native/launcher
-LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/src/java.base/share/native/launcher \
-    -I$(JDK_TOPDIR)/src/java.base/share/native/libjli \
-    -I$(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjli \
-    -I$(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/native/libjli \
+LAUNCHER_SRC := $(SRC_ROOT)/src/java.base/share/native/launcher
+LAUNCHER_CFLAGS := -I$(SRC_ROOT)/src/java.base/share/native/launcher \
+    -I$(SRC_ROOT)/src/java.base/share/native/libjli \
+    -I$(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/native/libjli \
+    -I$(SRC_ROOT)/src/java.base/$(OPENJDK_TARGET_OS)/native/libjli \
     #
-GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/java.base/windows/native/common/version.rc
-JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/java.base/windows/native/launcher/java.rc
-MACOSX_PLIST_DIR := $(JDK_TOPDIR)/src/java.base/macosx/native/launcher
-JAVA_MANIFEST := $(JDK_TOPDIR)/src/java.base/windows/native/launcher/java.manifest
+GLOBAL_VERSION_INFO_RESOURCE := $(SRC_ROOT)/src/java.base/windows/native/common/version.rc
+JAVA_VERSION_INFO_RESOURCE := $(SRC_ROOT)/src/java.base/windows/native/launcher/java.rc
+MACOSX_PLIST_DIR := $(SRC_ROOT)/src/java.base/macosx/native/launcher
+JAVA_MANIFEST := $(SRC_ROOT)/src/java.base/windows/native/launcher/java.manifest
 
 ################################################################################
 # Build standard launcher.

@@ -41,7 +41,7 @@ include TestFilesCompilation.gmk
 
 # Add more directories here when needed.
 BUILD_JDK_JTREG_NATIVE_SRC := \
-    $(JDK_TOPDIR)/test/native_sanity \
+    $(TOPDIR)/test/jdk/native_sanity \
     #
 
 BUILD_JDK_JTREG_OUTPUT_DIR := $(BUILD_OUTPUT)/support/test/jdk/jtreg/native

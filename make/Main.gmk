@@ -69,19 +69,19 @@ ALL_MODULES := $(call FindAllModules)
 # been built and should not be built again.
 ifneq ($(CREATING_BUILDJDK), true)
   buildtools-langtools:
-	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Tools.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f ToolsLangtools.gmk)
 
   interim-langtools:
-	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterim.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimLangtools.gmk)
 
   interim-rmic:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimRmic.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimRmic.gmk)
 
   interim-cldrconverter:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
 
   buildtools-jdk:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileTools.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CompileToolsJdk.gmk)
 endif
 
 ALL_TARGETS += buildtools-langtools interim-langtools \
@@ -91,10 +91,10 @@ ALL_TARGETS += buildtools-langtools interim-langtools \
 # Special targets for certain modules
 
 import-hotspot:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Import.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f ImportHotspot.gmk)
 
 unpack-sec:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f UnpackSecurity.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f UnpackSecurity.gmk)
 
 generate-exported-symbols:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f BuildStatic.gmk)
@@ -108,16 +108,18 @@ ALL_TARGETS += import-hotspot unpack-sec generate-exported-symbols
 # into the buildjdk so no need to generate sources.
 ifneq ($(CREATING_BUILDJDK), true)
   $(eval $(call DeclareRecipesForPhase, GENSRC, \
-      TARGET_SUFFIX := gensrc, \
+      TARGET_SUFFIX := gensrc-src, \
       FILE_PREFIX := Gensrc, \
       MAKE_SUBDIR := gensrc, \
       CHECK_MODULES := $(ALL_MODULES), \
-      MULTIPLE_MAKEFILES := true))
+  ))
 
-  JDK_GENSRC_TARGETS := $(filter %-gensrc-jdk, $(GENSRC_TARGETS))
-  LANGTOOLS_GENSRC_TARGETS := $(filter %-gensrc-langtools, $(GENSRC_TARGETS))
-  CORBA_GENSRC_TARGETS := $(filter %-gensrc-corba, $(GENSRC_TARGETS))
-  HOTSPOT_GENSRC_TARGETS := $(filter %-gensrc-hotspot, $(GENSRC_TARGETS))
+  $(foreach m, $(GENSRC_MODULES), $(eval $m-gensrc: $m-gensrc-src))
+
+  LANGTOOLS_GENSRC_TARGETS := $(filter $(addsuffix -%, $(LANGTOOLS_MODULES)), $(GENSRC_TARGETS))
+  CORBA_GENSRC_TARGETS := $(filter $(addsuffix -%, $(CORBA_MODULES)), $(GENSRC_TARGETS))
+  JDK_GENSRC_TARGETS := $(filter-out $(LANGTOOLS_GENSRC_TARGETS) \
+      $(CORBA_GENSRC_TARGETS),   $(GENSRC_TARGETS))
 
   GENSRC_MODULEINFO_MODULES := $(ALL_MODULES)
   GENSRC_MODULEINFO_TARGETS := $(addsuffix -gensrc-moduleinfo, \
@@ -159,7 +161,7 @@ $(eval $(call DeclareRecipesForPhase, COPY, \
     MAKE_SUBDIR := copy, \
     CHECK_MODULES := $(ALL_MODULES), \
     USE_WRAPPER := true, \
-    MULTIPLE_MAKEFILES := true))
+))
 
 ALL_COPY_MODULES += $(COPY_MODULES)
 ALL_COPY_TARGETS += $(COPY_TARGETS)
@@ -196,7 +198,7 @@ $(foreach m, $(filter-out jdk.scripting.nashorn, $(JAVA_MODULES)), \
 # Build nashorn. Needs to be compiled separately from the rest of the modules
 # due to nasgen.
 jdk.scripting.nashorn-java:
-	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) \
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) \
 	    -f BuildNashorn.gmk compile)
 
 ALL_TARGETS += $(JAVA_TARGETS)
@@ -250,10 +252,10 @@ ALL_TARGETS += hotspot hotspot-ide-project
 # Build demos and samples targets
 
 demos-jdk:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileDemos.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CompileDemos.gmk)
 
 samples-jdk:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopySamples.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CopySamples.gmk)
 
 ALL_TARGETS += demos-jdk samples-jdk
 
@@ -261,7 +263,7 @@ ALL_TARGETS += demos-jdk samples-jdk
 # Jigsaw specific data and analysis targets.
 
 generate-summary:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModuleSummary.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleSummary.gmk)
 
 ALL_TARGETS += generate-summary
 
@@ -379,7 +381,7 @@ create-buildjdk-interim-image:
 ALL_TARGETS += create-buildjdk-copy create-buildjdk-interim-image
 
 ################################################################################
-# The interim-image is a small jlinked image that is used to generate artifacts 
+# The interim-image is a small jlinked image that is used to generate artifacts
 # at build time for use when linking the real images.
 
 interim-image:
@@ -387,7 +389,7 @@ interim-image:
 
 ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
   generate-classlist:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f GenerateClasslist.gmk)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f GenerateClasslist.gmk)
 endif
 
 ALL_TARGETS += interim-image generate-classlist
@@ -401,19 +403,19 @@ prepare-test-image:
 	$(ECHO) > $(TEST_IMAGE_DIR)/Readme.txt 'JDK test image'
 
 build-test-hotspot-jtreg-native:
-	+($(CD) $(HOTSPOT_TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNative.gmk \
+	+($(CD) $(SRC_ROOT)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNativeHotspot.gmk \
 	    build-test-hotspot-jtreg-native)
 
 test-image-hotspot-jtreg-native:
-	+($(CD) $(HOTSPOT_TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNative.gmk \
+	+($(CD) $(SRC_ROOT)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNativeHotspot.gmk \
 	    test-image-hotspot-jtreg-native)
 
 build-test-jdk-jtreg-native:
-	+($(CD) $(JDK_TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNative.gmk \
+	+($(CD) $(SRC_ROOT)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNativeJdk.gmk \
 	    build-test-jdk-jtreg-native)
 
 test-image-jdk-jtreg-native:
-	+($(CD) $(JDK_TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNative.gmk \
+	+($(CD) $(SRC_ROOT)/make/test && $(MAKE) $(MAKE_ARGS) -f JtregNativeJdk.gmk \
 	    test-image-jdk-jtreg-native)
 
 ifeq ($(BUILD_GTEST), true)
@@ -523,8 +525,6 @@ else
 
   $(CORBA_GENSRC_TARGETS): interim-langtools
 
-  $(HOTSPOT_GENSRC_TARGETS): interim-langtools
-
   $(JDK_GENSRC_TARGETS): interim-langtools buildtools-jdk
 
   $(GENSRC_MODULEINFO_TARGETS): buildtools-jdk
@@ -591,15 +591,8 @@ else
   # in javadoc.
   java.desktop-gensrc-jdk: java.base-gensrc
 
-  # The annotation processing for jdk.vm.ci needs java.base classes from the
-  # current JDK.
-  jdk.vm.ci-gensrc-hotspot: java.base-java
-
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
-
-  # The copy target copies files generated by gensrc
-  java.base-copy-hotspot: java.base-gensrc-hotspot
 
   jdk.jdeps-gendata: java rmic
 
