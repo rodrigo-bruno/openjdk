@@ -78,8 +78,8 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       $(error Unknown target OS $(OPENJDK_TARGET_OS) in CompileLibjsig.gmk)
     endif
 
-    LIBJSIG_SRC_FILE := $(HOTSPOT_TOPDIR)/src/os/$(HOTSPOT_TARGET_OS)/vm/jsig.c
-    LIBJSIG_MAPFILE := $(wildcard $(HOTSPOT_TOPDIR)/make/mapfiles/libjsig/mapfile-vers-$(OPENJDK_TARGET_OS))
+    LIBJSIG_SRC_FILE := $(TOPDIR)/src/hotspot/os/$(HOTSPOT_TARGET_OS)/vm/jsig.c
+    LIBJSIG_MAPFILE := $(wildcard $(TOPDIR)/make/hotspot/mapfiles/libjsig/mapfile-vers-$(OPENJDK_TARGET_OS))
     LIBJSIG_OUTPUTDIR := $(HOTSPOT_OUTPUTDIR)/libjsig
 
     LIBJSIG_LDFLAGS += $(SHARED_LIBRARY_FLAGS)

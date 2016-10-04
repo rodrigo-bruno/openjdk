@@ -39,11 +39,11 @@ SA_TOPDIR := $(SRC_ROOT)/src/jdk.hotspot.agent
 SA_TOOLCHAIN := TOOLCHAIN_DEFAULT
 SA_NAME := saproc
 SA_SRC += $(SA_TOPDIR)/share/native/libsaproc $(SA_TOPDIR)/$(OPENJDK_TARGET_OS)/native/libsaproc
-SA_MAPFILE := $(HOTSPOT_TOPDIR)/make/mapfiles/libsaproc/mapfile-$(OPENJDK_TARGET_OS)
+SA_MAPFILE := $(TOPDIR)/make/hotspot/mapfiles/libsaproc/mapfile-$(OPENJDK_TARGET_OS)
 SA_INCLUDES := \
     $(addprefix -I, $(SA_SRC)) \
     -I$(SUPPORT_OUTPUTDIR)/headers/jdk.hotspot.agent \
-    -I$(HOTSPOT_TOPDIR)/src/os/$(OPENJDK_TARGET_OS) \
+    -I$(TOPDIR)/src/hotspot/os/$(OPENJDK_TARGET_OS) \
     #
 
 ifeq ($(OPENJDK_TARGET_CPU), x86_64)

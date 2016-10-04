@@ -240,11 +240,11 @@ ALL_TARGETS += $(LAUNCHER_TARGETS)
 
 ifeq ($(BUILD_HOTSPOT),true)
 hotspot:
-	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f BuildHotspot.gmk)
+	+($(CD) $(TOPDIR)/make/hotspot && $(MAKE) $(MAKE_ARGS) -f BuildHotspot.gmk)
 endif
 
 hotspot-ide-project:
-	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f ide/CreateVSProject.gmk)
+	+($(CD) $(TOPDIR)/make/hotspot && $(MAKE) $(MAKE_ARGS) -f ide/CreateVSProject.gmk)
 
 ALL_TARGETS += hotspot hotspot-ide-project
 
@@ -420,7 +420,7 @@ test-image-jdk-jtreg-native:
 
 ifeq ($(BUILD_GTEST), true)
   test-image-hotspot-gtest:
-	+($(CD) $(HOTSPOT_TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) -f GtestImage.gmk)
+	+($(CD) $(TOPDIR)/make/hotspot/test && $(MAKE) $(MAKE_ARGS) -f GtestImage.gmk)
 endif
 
 build-test-lib:

@@ -32,7 +32,7 @@ default: all
 include $(SPEC)
 include MakeBase.gmk
 
-$(eval $(call IncludeCustomExtension, hotspot, Dist.gmk))
+$(eval $(call IncludeCustomExtension, , hotspot/Dist.gmk))
 
 DIST_OUTPUTDIR := $(HOTSPOT_OUTPUTDIR)/dist
 
@@ -107,7 +107,7 @@ ANY_JVM_VARIANT := $(firstword $(JVM_VARIANTS))
 JVM_VARIANT_OUTPUTDIR := $(HOTSPOT_OUTPUTDIR)/variant-$(ANY_JVM_VARIANT)
 
 ### Copy platform-independent .h files
-INCLUDE_FILES_SRC_DIR := $(HOTSPOT_TOPDIR)/src/share/vm
+INCLUDE_FILES_SRC_DIR := $(TOPDIR)/src/hotspot/share/vm
 $(eval $(call SetupCopyFiles, COPY_INCLUDE, \
     SRC := $(INCLUDE_FILES_SRC_DIR), \
     DEST := $(DIST_OUTPUTDIR)/include, \
@@ -122,7 +122,7 @@ TARGETS += $(COPY_INCLUDE)
 
 # This might have been defined in a custom extension
 ifeq ($(JNI_MD_H_SRC), )
-  JNI_MD_H_SRC := $(HOTSPOT_TOPDIR)/src/cpu/$(HOTSPOT_TARGET_CPU_ARCH)/vm/jni_$(HOTSPOT_TARGET_CPU_ARCH).h
+  JNI_MD_H_SRC := $(TOPDIR)/src/hotspot/cpu/$(HOTSPOT_TARGET_CPU_ARCH)/vm/jni_$(HOTSPOT_TARGET_CPU_ARCH).h
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)

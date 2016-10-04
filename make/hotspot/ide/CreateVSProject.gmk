@@ -90,7 +90,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupJavaCompilation, BUILD_PROJECT_CREATOR, \
       SETUP := GENERATE_OLDBYTECODE, \
       ADD_JAVAC_FLAGS := -Xlint:-auxiliaryclass, \
-      SRC := $(HOTSPOT_TOPDIR)/make/src/classes, \
+      SRC := $(TOPDIR)/make/hotspot/src/classes, \
       BIN := $(TOOLS_OUTPUTDIR), \
   ))
 
@@ -107,14 +107,9 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 
   # We hard-code gensrc dir to server (since this includes adfiles)
   PROJECT_CREATOR_ARGS := \
-      -sourceBase $(call FixPath, $(HOTSPOT_TOPDIR)) \
-      -startAt src \
-      -relativeSrcInclude src \
-      -hidePath .hg \
-      -hidePath .jcheck \
-      -hidePath jdk.hotspot.agent \
-      -hidePath jdk.vm.ci \
-      -hidePath jdk.jfr \
+      -sourceBase $(call FixPath, $(TOPDIR)) \
+      -startAt src/hotspot \
+      -relativeSrcInclude src/hotspot \
       -compiler VC10 \
       -jdkTargetRoot $(call FixPath, $(JDK_OUTPUTDIR)) \
       -platformName x64 \

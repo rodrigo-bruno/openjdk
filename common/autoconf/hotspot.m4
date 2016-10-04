@@ -312,7 +312,7 @@ AC_DEFUN_ONCE([HOTSPOT_ENABLE_DISABLE_GTEST],
   AC_ARG_ENABLE([hotspot-gtest], [AS_HELP_STRING([--disable-hotspot-gtest],
       [Disables building of the Hotspot unit tests])])
 
-  if test -e "$HOTSPOT_TOPDIR/test/native"; then
+  if test -e "$TOPDIR/test/hotspot/native"; then
     GTEST_DIR_EXISTS="true"
   else
     GTEST_DIR_EXISTS="false"

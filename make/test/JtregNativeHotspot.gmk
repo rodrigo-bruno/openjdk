@@ -41,34 +41,34 @@ include TestFilesCompilation.gmk
 
 # Add more directories here when needed.
 BUILD_HOTSPOT_JTREG_NATIVE_SRC := \
-    $(TOPDIR)/test/hotspot/native_sanity \
-    $(TOPDIR)/test/hotspot/runtime/jni/8025979 \
-    $(TOPDIR)/test/hotspot/runtime/jni/8033445 \
-    $(TOPDIR)/test/hotspot/runtime/jni/checked \
-    $(TOPDIR)/test/hotspot/runtime/jni/ToStringInInterfaceTest \
-    $(TOPDIR)/test/hotspot/runtime/modules/getModuleJNI \
-    $(TOPDIR)/test/hotspot/runtime/SameObject \
-    $(TOPDIR)/test/hotspot/runtime/BoolReturn \
-    $(TOPDIR)/test/hotspot/compiler/floatingpoint/ \
-    $(TOPDIR)/test/hotspot/compiler/calls \
-    $(TOPDIR)/test/hotspot/serviceability/jvmti/GetNamedModule \
-    $(TOPDIR)/test/hotspot/testlibrary/jvmti \
-    $(TOPDIR)/test/hotspot/compiler/jvmci/jdk.vm.ci.code.test \
-    $(TOPDIR)/test/hotspot/serviceability/jvmti/GetModulesInfo \
+    $(TOPDIR)/test/hotspot/java/native_sanity \
+    $(TOPDIR)/test/hotspot/java/runtime/jni/8025979 \
+    $(TOPDIR)/test/hotspot/java/runtime/jni/8033445 \
+    $(TOPDIR)/test/hotspot/java/runtime/jni/checked \
+    $(TOPDIR)/test/hotspot/java/runtime/jni/ToStringInInterfaceTest \
+    $(TOPDIR)/test/hotspot/java/runtime/modules/getModuleJNI \
+    $(TOPDIR)/test/hotspot/java/runtime/SameObject \
+    $(TOPDIR)/test/hotspot/java/runtime/BoolReturn \
+    $(TOPDIR)/test/hotspot/java/compiler/floatingpoint/ \
+    $(TOPDIR)/test/hotspot/java/compiler/calls \
+    $(TOPDIR)/test/hotspot/java/serviceability/jvmti/GetNamedModule \
+    $(TOPDIR)/test/hotspot/java/testlibrary/jvmti \
+    $(TOPDIR)/test/hotspot/java/compiler/jvmci/jdk.vm.ci.code.test \
+    $(TOPDIR)/test/hotspot/java/serviceability/jvmti/GetModulesInfo \
     #
 
 # Add conditional directories here when needed.
 ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
   BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
-      $(TOPDIR)/test/hotspot/runtime/libadimalloc.solaris.sparc \
-      $(TOPDIR)/test/hotspot/runtime/ThreadSignalMask
+      $(TOPDIR)/test/hotspot/java/runtime/libadimalloc.solaris.sparc \
+      $(TOPDIR)/test/hotspot/java/runtime/ThreadSignalMask
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), linux)
   BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
-      $(TOPDIR)/test/hotspot/runtime/execstack \
-      $(TOPDIR)/test/hotspot/runtime/jsig \
-      $(TOPDIR)/test/hotspot/runtime/StackGuardPages
+      $(TOPDIR)/test/hotspot/java/runtime/execstack \
+      $(TOPDIR)/test/hotspot/java/runtime/jsig \
+      $(TOPDIR)/test/hotspot/java/runtime/StackGuardPages
 endif
 
 ifeq ($(TOOLCHAIN_TYPE), solstudio)
