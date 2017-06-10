@@ -1,0 +1,13 @@
+#!/bin/bash
+
+JAVA_HOME=/home/rbruno/git/openjdk-9-jelastic/build/linux-x86_64-normal-server-release/jdk
+JAVA_EXE="$JAVA_HOME/bin/java"
+JAVAC_EXE="$JAVA_HOME/bin/javac"
+
+JVM_OPTS="$JVM_OPTS -Xlog:all=info:file=jvm.log:uptime,level:filecount=1"
+
+JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
+JVM_OPTS="$JVM_OPTS -Xms6g"
+JVM_OPTS="$JVM_OPTS -Xmx6g"
+JVM_OPTS="$JVM_OPTS -XX:NewSize=256m"
+JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=256m"
