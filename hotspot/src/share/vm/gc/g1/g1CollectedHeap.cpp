@@ -1435,7 +1435,11 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
   const double maximum_free_percentage = (double) MaxHeapFreeRatio / 100.0;
   const double minimum_used_percentage = 1.0 - maximum_free_percentage;
 
-  const size_t min_heap_size = collector_policy()->min_heap_byte_size();
+  // TODO - change value in collector_policy.
+  bool aggressive_resizing = true;
+  const size_t min_heap_size = aggressive_resizing ?
+      used_after_gc : collector_policy()->min_heap_byte_size();
+  // TODO - check how I can reduce the max heap size.
   const size_t max_heap_size = collector_policy()->max_heap_byte_size();
 
   // We have to be careful here as these two calculations can overflow
@@ -1471,6 +1475,16 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
   // with respect to the heap max size as it's an upper bound (i.e.,
   // we'll try to make the capacity smaller than it, not greater).
   maximum_desired_capacity =  MAX2(maximum_desired_capacity, min_heap_size);
+
+  log_info(gc, ergo, heap)("resize_if_necessary_after_full_collection "
+                              "min_heap_size: " SIZE_FORMAT "B max_heap_size: " SIZE_FORMAT "B",
+                              min_heap_size, max_heap_size);
+  log_info(gc, ergo, heap)("resize_if_necessary_after_full_collection "
+                              "capacity_after_gc: " SIZE_FORMAT "B maximum_desired_capacity: " SIZE_FORMAT "B",
+                              capacity_after_gc, maximum_desired_capacity);
+  log_info(gc, ergo, heap)("resize_if_necessary_after_full_collection "
+                              "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B min_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
+                              capacity_after_gc, used_after_gc, minimum_desired_capacity, MinHeapFreeRatio);
 
   if (capacity_after_gc < minimum_desired_capacity) {
     // Don't expand unless it's significant
