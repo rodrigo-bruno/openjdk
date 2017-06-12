@@ -6,3 +6,5 @@ webrev
 .hgtip
 .bridge2
 *.DS_Store
+cscope.*
+tags
