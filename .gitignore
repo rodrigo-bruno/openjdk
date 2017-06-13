@@ -1,7 +1,7 @@
 *.class
 build/
 dist/
-nbproject/private/
+common/nb_native/
 webrev
 .hgtip
 .bridge2
