@@ -15,5 +15,10 @@ run-stats:
 run-gc:
 	./launcher/jvm-gc Test
 
+run-mmap: TestMMap.cpp
+	g++ -c TestMMap.cpp
+	g++ -o TestMMap TestMMap.cpp
+	./TestMMap
+
 clean:
-	rm -f *.class *.log core
+	rm -f *.class *.log core *.o TestMMap
