@@ -1505,7 +1505,7 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
                               "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B min_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
                               capacity_after_gc, used_after_gc, minimum_desired_capacity, MinHeapFreeRatio);
 
-    shrink(shrink_bytes);
+    shrink(shrink_bytes, aggressive_resizing);
   }
 }
 
@@ -1664,14 +1664,14 @@ bool G1CollectedHeap::expand(size_t expand_bytes, WorkGang* pretouch_workers, do
   return regions_to_expand > 0;
 }
 
-void G1CollectedHeap::shrink_helper(size_t shrink_bytes) {
+void G1CollectedHeap::shrink_helper(size_t shrink_bytes, bool release) {
   size_t aligned_shrink_bytes =
     ReservedSpace::page_align_size_down(shrink_bytes);
   aligned_shrink_bytes = align_size_down(aligned_shrink_bytes,
                                          HeapRegion::GrainBytes);
   uint num_regions_to_remove = (uint)(shrink_bytes / HeapRegion::GrainBytes);
 
-  uint num_regions_removed = _hrm.shrink_by(num_regions_to_remove);
+  uint num_regions_removed = _hrm.shrink_by(num_regions_to_remove, release);
   size_t shrunk_bytes = num_regions_removed * HeapRegion::GrainBytes;
 
 
@@ -1684,7 +1684,7 @@ void G1CollectedHeap::shrink_helper(size_t shrink_bytes) {
   }
 }
 
-void G1CollectedHeap::shrink(size_t shrink_bytes) {
+void G1CollectedHeap::shrink(size_t shrink_bytes, bool release) {
   _verifier->verify_region_sets_optional();
 
   // We should only reach here at the end of a Full GC which means we
@@ -1696,7 +1696,7 @@ void G1CollectedHeap::shrink(size_t shrink_bytes) {
   // could instead use the remove_all_pending() method on free_list to
   // remove only the ones that we need to remove.
   tear_down_region_sets(true /* free_list_only */);
-  shrink_helper(shrink_bytes);
+  shrink_helper(shrink_bytes, release);
   rebuild_region_sets(true /* free_list_only */);
 
   _hrm.verify_optional();

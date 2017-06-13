@@ -718,8 +718,8 @@ protected:
 
   // Shrink the garbage-first heap by at most the given size (in bytes!).
   // (Rounds down to a HeapRegion boundary.)
-  virtual void shrink(size_t expand_bytes);
-  void shrink_helper(size_t expand_bytes);
+  virtual void shrink(size_t expand_bytes, bool release = false);
+  void shrink_helper(size_t expand_bytes, bool release = false);
 
   #if TASKQUEUE_STATS
   static void print_taskqueue_stats_hdr(outputStream* const st);

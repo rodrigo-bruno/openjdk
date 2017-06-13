@@ -90,7 +90,7 @@ void HeapRegionManager::commit_regions(uint index, size_t num_regions, WorkGang*
   _card_counts_mapper->commit_regions(index, num_regions, pretouch_gang);
 }
 
-void HeapRegionManager::uncommit_regions(uint start, size_t num_regions) {
+void HeapRegionManager::uncommit_regions(uint start, size_t num_regions, bool release) {
   guarantee(num_regions >= 1, "Need to specify at least one region to uncommit, tried to uncommit zero regions at %u", start);
   guarantee(_num_committed >= num_regions, "pre-condition");
 
@@ -98,12 +98,15 @@ void HeapRegionManager::uncommit_regions(uint start, size_t num_regions) {
   if (G1CollectedHeap::heap()->hr_printer()->is_active()) {
     for (uint i = start; i < start + num_regions; i++) {
       HeapRegion* hr = at(i);
+      // [jelastic] TODO - if release, print it
       G1CollectedHeap::heap()->hr_printer()->uncommit(hr);
     }
   }
 
   _num_committed -= (uint)num_regions;
 
+  // [jelastic] TODO - we need to send release to uncommit_regions
+  // [jelastic] TODO - my filling is that we can release because the heap expansion will try to acquire the memory again.
   _available_map.par_clear_range(start, start + num_regions, BitMap::unknown_range);
   _heap_mapper->uncommit_regions(start, num_regions);
 
@@ -362,7 +365,7 @@ void HeapRegionManager::par_iterate(HeapRegionClosure* blk, uint worker_id, Heap
   }
 }
 
-uint HeapRegionManager::shrink_by(uint num_regions_to_remove) {
+uint HeapRegionManager::shrink_by(uint num_regions_to_remove, bool release) {
   assert(length() > 0, "the region sequence should not be empty");
   assert(length() <= _allocated_heapregions_length, "invariant");
   assert(_allocated_heapregions_length > 0, "we should have at least one region committed");
@@ -392,7 +395,7 @@ uint HeapRegionManager::shrink_by(uint num_regions_to_remove) {
   return removed;
 }
 
-void HeapRegionManager::shrink_at(uint index, size_t num_regions) {
+void HeapRegionManager::shrink_at(uint index, size_t num_regions, bool release) {
 #ifdef ASSERT
   for (uint i = index; i < (index + num_regions); i++) {
     assert(is_available(i), "Expected available region at index %u", i);
@@ -400,7 +403,8 @@ void HeapRegionManager::shrink_at(uint index, size_t num_regions) {
     assert(at(i)->is_free(), "Expected free region at index %u", i);
   }
 #endif
-  uncommit_regions(index, num_regions);
+
+    uncommit_regions(index, num_regions, release);
 }
 
 uint HeapRegionManager::find_empty_from_idx_reverse(uint start_idx, uint* res_idx) const {

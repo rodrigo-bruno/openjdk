@@ -305,6 +305,7 @@ void ReservedHeapSpace::try_reserve_heap(size_t size,
                                          size_t alignment,
                                          bool large,
                                          char* requested_address) {
+  // [jelastic] - This is how the heap is reserved.
   if (_base != NULL) {
     // We tried before, but we didn't like the address delivered.
     release();

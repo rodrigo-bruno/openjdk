@@ -99,7 +99,7 @@ class HeapRegionManager: public CHeapObj<mtGC> {
 
   // Pass down commit calls to the VirtualSpace.
   void commit_regions(uint index, size_t num_regions = 1, WorkGang* pretouch_gang = NULL);
-  void uncommit_regions(uint index, size_t num_regions = 1);
+  void uncommit_regions(uint index, size_t num_regions = 1, bool release = false);
 
   // Notify other data structures about change in the heap layout.
   void update_committed_space(HeapWord* old_end, HeapWord* new_end);
@@ -244,11 +244,11 @@ public:
 
   // Uncommit up to num_regions_to_remove regions that are completely free.
   // Return the actual number of uncommitted regions.
-  uint shrink_by(uint num_regions_to_remove);
+  uint shrink_by(uint num_regions_to_remove, bool release = false);
 
   // Uncommit a number of regions starting at the specified index, which must be available,
   // empty, and free.
-  void shrink_at(uint index, size_t num_regions);
+  void shrink_at(uint index, size_t num_regions, bool release = false);
 
   void verify();
 
