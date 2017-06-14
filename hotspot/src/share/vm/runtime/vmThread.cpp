@@ -432,6 +432,8 @@ void VMThread::loop() {
           #endif
           SafepointSynchronize::end();
         }
+        // [jelastic] TODO - check cpu, mem, and time since last gc.
+        // If necessary, trigger full gc.
         _cur_vm_operation = _vm_queue->remove_next();
 
         // If we are at a safepoint we will evaluate all the operations that
