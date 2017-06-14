@@ -2921,9 +2921,14 @@ unsigned long* os::Linux::_numa_all_nodes;
 
 bool os::pd_uncommit_memory(char* addr, size_t size) {
   // [jelastic] This is where memory is uncommited.
-  uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
+  bool aggressive = true;
+  if (!aggressive) {
+    uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
                                      MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
-  return res  != (uintptr_t) MAP_FAILED;
+    return res  != (uintptr_t) MAP_FAILED;
+  } else {
+    return ::munmap(addr, size) == 0;
+  }
 }
 
 static address get_stack_commited_bottom(address bottom, size_t size) {
