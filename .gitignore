@@ -8,3 +8,4 @@ webrev
 *.DS_Store
 cscope.*
 tags
+*.swp
