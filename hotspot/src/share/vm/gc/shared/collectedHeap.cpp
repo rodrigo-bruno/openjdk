@@ -166,6 +166,7 @@ CollectedHeap::CollectedHeap() :
   _is_gc_active(false),
   _total_collections(0),
   _total_full_collections(0),
+  _last_full_collection(0),
   _gc_cause(GCCause::_no_gc),
   _gc_lastcause(GCCause::_no_gc),
   _defer_initial_card_mark(false) // strengthened by subclass in pre_initialize() below.

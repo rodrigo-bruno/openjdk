@@ -434,6 +434,9 @@ void VMThread::loop() {
         }
         // [jelastic] TODO - check cpu, mem, and time since last gc.
         // If necessary, trigger full gc.
+        if (GCFrequency && (os::elapsedTime() -  Universe::heap()->last_full_collection() > GCFrequency)) {
+          log_debug(gc, ergo, heap)("Should run gc! Elapsed time = %f; Last Full GC = %f; GCFrequency = "UINTX_FORMAT, os::elapsedTime(), Universe::heap()->last_full_collection(), GCFrequency);
+        }
         _cur_vm_operation = _vm_queue->remove_next();
 
         // If we are at a safepoint we will evaluate all the operations that

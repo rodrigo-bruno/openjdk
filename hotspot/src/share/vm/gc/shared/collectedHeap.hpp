@@ -108,6 +108,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   unsigned int _total_collections;          // ... started
   unsigned int _total_full_collections;     // ... started
+  double _last_full_collection;             // ... started
   NOT_PRODUCT(volatile size_t _promotion_failure_alot_count;)
   NOT_PRODUCT(volatile size_t _promotion_failure_alot_gc_number;)
 
@@ -464,6 +465,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Total number of GC collections (started)
   unsigned int total_collections() const { return _total_collections; }
   unsigned int total_full_collections() const { return _total_full_collections;}
+  double last_full_collection() const { return _last_full_collection;}
 
   // Increment total number of GC collections (started)
   // Should be protected but used by PSMarkSweep - cleanup for 1.4.2
@@ -471,6 +473,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
     _total_collections++;
     if (full) {
       increment_total_full_collections();
+      _last_full_collection = os::elapsedTime();
     }
   }
 
