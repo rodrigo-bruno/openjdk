@@ -41,6 +41,7 @@
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
 #include "utilities/xmlstream.hpp"
+#include "gc/g1/vm_operations_g1.hpp"
 
 // Dummy VM operation to act as first element in our circular double-linked list
 class VM_Dummy: public VM_Operation {
@@ -436,6 +437,9 @@ void VMThread::loop() {
         // If necessary, trigger full gc.
         if (GCFrequency && (os::elapsedTime() -  Universe::heap()->last_full_collection() > GCFrequency)) {
           log_debug(gc, ergo, heap)("Should run gc! Elapsed time = %f; Last Full GC = %f; GCFrequency = "UINTX_FORMAT, os::elapsedTime(), Universe::heap()->last_full_collection(), GCFrequency);
+          VM_G1CollectFull op(Universe::heap()->total_collections(), Universe::heap()->total_full_collections(), GCCause::_java_lang_system_gc);
+          execute(&op);
+
         }
         _cur_vm_operation = _vm_queue->remove_next();
 
