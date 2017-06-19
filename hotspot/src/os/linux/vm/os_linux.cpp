@@ -2921,8 +2921,7 @@ unsigned long* os::Linux::_numa_all_nodes;
 
 bool os::pd_uncommit_memory(char* addr, size_t size) {
   // [jelastic] This is where memory is uncommited.
-  bool aggressive = true;
-  if (!aggressive) {
+  if (!ReleaseShrinkedMemory) {
     uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
                                      MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
     return res  != (uintptr_t) MAP_FAILED;
@@ -5010,6 +5009,11 @@ int os::active_processor_count() {
 
   assert(cpu_count > 0 && cpu_count <= processor_count(), "sanity check");
   return cpu_count;
+}
+
+int os::processor_usage_percentage() {
+  // TODO - complete.
+  return 0;
 }
 
 void os::set_native_thread_name(const char *name) {

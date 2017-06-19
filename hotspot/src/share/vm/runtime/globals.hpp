@@ -3187,9 +3187,20 @@ public:
           " to the target size at the next full GC rather than requiring"   \
           " smaller steps during multiple full GCs.")                       \
                                                                             \
-  manageable(uintx, GCFrequency, 0,                                            \
+  manageable(uintx, GCFrequency, 0,                                         \
           "Number of seconds to wait before triggering a full gc. Use zero" \
           "to disable periodic enforced gc cycles.")                        \
+                                                                            \
+  manageable(uintx, MaxCpuUsageGC, 0,                                       \
+          "Max CPU usage that should still trigger periodic GCs. Above"     \
+          "this value, no periodic GC will not be triggered.")              \
+                                                                            \
+  manageable(uintx, MaxMemUsageGC, 0,                                       \
+          "Max mem usage that should still trigger periodic GCs. Above"     \
+          "this value, no periodic GC will not be triggered.")              \
+                                                                            \
+  product(bool, ReleaseShrinkedMemory, false,                               \
+          "Force shinked memory to be released (and not just incommited).") \
                                                                             \
   product(intx, SoftRefLRUPolicyMSPerMB, 1000,                              \
           "Number of milliseconds per MB of free space in the heap")        \
