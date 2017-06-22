@@ -1,0 +1,10 @@
+sleep 5
+alloc buffer 512 1024000
+sleep 5
+gc
+sleep 5
+delete buffer
+sleep 5
+gc
+sleep 5
+
