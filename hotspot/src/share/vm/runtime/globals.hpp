@@ -3191,7 +3191,7 @@ public:
           "Number of seconds to wait before triggering a full gc. Use zero" \
           "to disable periodic enforced gc cycles.")                        \
                                                                             \
-  manageable(uintx, MaxCpuUsageGC, 0,                                       \
+  manageable(uintx, MaxLoadGC, 0,                                           \
           "Max CPU usage that should still trigger periodic GCs. Above"     \
           "this value, no periodic GC will not be triggered.")              \
                                                                             \

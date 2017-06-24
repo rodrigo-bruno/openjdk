@@ -5011,11 +5011,6 @@ int os::active_processor_count() {
   return cpu_count;
 }
 
-int os::processor_usage_percentage() {
-  // TODO - complete.
-  return 0;
-}
-
 void os::set_native_thread_name(const char *name) {
   if (Linux::_pthread_setname_np) {
     char buf [16]; // according to glibc manpage, 16 chars incl. '/0'

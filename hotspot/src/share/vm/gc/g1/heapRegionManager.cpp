@@ -90,7 +90,7 @@ void HeapRegionManager::commit_regions(uint index, size_t num_regions, WorkGang*
   _card_counts_mapper->commit_regions(index, num_regions, pretouch_gang);
 }
 
-void HeapRegionManager::uncommit_regions(uint start, size_t num_regions, bool release) {
+void HeapRegionManager::uncommit_regions(uint start, size_t num_regions) {
   guarantee(num_regions >= 1, "Need to specify at least one region to uncommit, tried to uncommit zero regions at %u", start);
   guarantee(_num_committed >= num_regions, "pre-condition");
 
@@ -365,7 +365,7 @@ void HeapRegionManager::par_iterate(HeapRegionClosure* blk, uint worker_id, Heap
   }
 }
 
-uint HeapRegionManager::shrink_by(uint num_regions_to_remove, bool release) {
+uint HeapRegionManager::shrink_by(uint num_regions_to_remove) {
   assert(length() > 0, "the region sequence should not be empty");
   assert(length() <= _allocated_heapregions_length, "invariant");
   assert(_allocated_heapregions_length > 0, "we should have at least one region committed");
@@ -395,7 +395,7 @@ uint HeapRegionManager::shrink_by(uint num_regions_to_remove, bool release) {
   return removed;
 }
 
-void HeapRegionManager::shrink_at(uint index, size_t num_regions, bool release) {
+void HeapRegionManager::shrink_at(uint index, size_t num_regions) {
 #ifdef ASSERT
   for (uint i = index; i < (index + num_regions); i++) {
     assert(is_available(i), "Expected available region at index %u", i);
@@ -404,7 +404,7 @@ void HeapRegionManager::shrink_at(uint index, size_t num_regions, bool release) 
   }
 #endif
 
-    uncommit_regions(index, num_regions, release);
+  uncommit_regions(index, num_regions);
 }
 
 uint HeapRegionManager::find_empty_from_idx_reverse(uint start_idx, uint* res_idx) const {

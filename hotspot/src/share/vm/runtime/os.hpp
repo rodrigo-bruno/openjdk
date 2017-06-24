@@ -229,9 +229,6 @@ class os: AllStatic {
   // Note that on some OSes this can change dynamically.
   static int active_processor_count();
 
-  // Returns the overall processor usage percetage (integer between 0 and 100).
-  static int processor_usage_percentage();
-
   // At startup the number of active CPUs this process is allowed to run on.
   // This value does not change dynamically. May be different from active_processor_count().
   static int initial_active_processor_count() {
