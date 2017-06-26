@@ -1436,9 +1436,7 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
   const double minimum_used_percentage = 1.0 - maximum_free_percentage;
 
   // TODO - change value in collector_policy.
-  // TODO - create a system variable to override min heap size?
-  bool aggressive_resizing = true;
-  const size_t min_heap_size = aggressive_resizing ?
+  const size_t min_heap_size = AggressiveShrinking ?
       used_after_gc : collector_policy()->min_heap_byte_size();
   // TODO - check how I can reduce the max heap size.
   const size_t max_heap_size = collector_policy()->max_heap_byte_size();

@@ -391,10 +391,16 @@ bool should_gc() {
     return false;
   }
 
-  // Checking if enough memory is not being used.
-  // TODO - check if jelastic wants this percentage of free/physical
-  if ((MaxMemUsageGC > 0) &&
-      ((os::available_memory() / os::physical_memory() * 100) > MaxMemUsageGC)) {
+  // Checking if the used memory is above a threshold.
+  if ((MaxUsedMem > 0) &&
+      (Universe::heap()->used() < MaxUsedMem)) {
+    return false;
+  }
+
+  // Checking if the difference between max capacity and current capacity is
+  // above a threshold.
+  if ((MaxUnusedMem > 0) &&
+      (Universe::heap()->max_capacity() - Universe::heap()->capacity() < MaxUnusedMem)) {
     return false;
   }
 

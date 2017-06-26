@@ -3195,12 +3195,18 @@ public:
           "Max CPU usage that should still trigger periodic GCs. Above"     \
           "this value, no periodic GC will not be triggered.")              \
                                                                             \
-  manageable(uintx, MaxMemUsageGC, 0,                                       \
-          "Max mem usage that should still trigger periodic GCs. Above"     \
-          "this value, no periodic GC will not be triggered.")              \
+  manageable(uintx, MaxUnusedMem, 0,                                        \
+          "Max difference between max capacity and current capacity that"   \
+          "does not trigger a periodic GC.")                                \
+                                                                            \
+  manageable(uintx, MaxUsedMem, 0,                                          \
+          "Max used memory that does not trigger a periodic GC.")           \
                                                                             \
   product(bool, ReleaseShrinkedMemory, false,                               \
           "Force shinked memory to be released (and not just incommited).") \
+                                                                            \
+  product(bool, AggressiveShrinking, false,                                 \
+          "Force shinking even if the min heap size if violated.")          \
                                                                             \
   product(intx, SoftRefLRUPolicyMSPerMB, 1000,                              \
           "Number of milliseconds per MB of free space in the heap")        \
