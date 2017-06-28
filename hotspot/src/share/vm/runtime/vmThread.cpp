@@ -41,6 +41,7 @@
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
 #include "utilities/xmlstream.hpp"
+#include "gc/g1/vm_operations_g1.hpp"
 
 // Dummy VM operation to act as first element in our circular double-linked list
 class VM_Dummy: public VM_Operation {
@@ -380,6 +381,38 @@ void VMThread::evaluate_operation(VM_Operation* op) {
   }
 }
 
+bool should_gc() {
+
+  // Checking if load is lower than max.
+  const int max_nelem = 1;
+  double la[max_nelem];
+  if ((MaxLoadGC > 0) &&
+      (os::loadavg(la, max_nelem) == -1 || la[0] > MaxLoadGC)) {
+    return false;
+  }
+
+  // Checking if the used memory is above a threshold.
+  if ((MaxUsedMem > 0) &&
+      (Universe::heap()->used() < MaxUsedMem)) {
+    return false;
+  }
+
+  // Checking if the difference between max capacity and current capacity is
+  // above a threshold.
+  if ((MaxUnusedMem > 0) &&
+      (Universe::heap()->max_capacity() - Universe::heap()->capacity() < MaxUnusedMem)) {
+    return false;
+  }
+
+  // Checking if enough time has passed
+  if ((GCFrequency > 0 ) &&
+      (os::elapsedTime() -  Universe::heap()->last_full_collection() > GCFrequency)) {
+    log_debug(gc, ergo, heap)("Should run gc! Elapsed time = %f; Last Full GC = %f; GCFrequency = "UINTX_FORMAT, os::elapsedTime(), Universe::heap()->last_full_collection(), GCFrequency);
+    return true;
+  }
+
+  return false;
+}
 
 void VMThread::loop() {
   assert(_cur_vm_operation == NULL, "no current one should be executing");
@@ -431,6 +464,12 @@ void VMThread::loop() {
             if (GCALotAtAllSafepoints) InterfaceSupport::check_gc_alot();
           #endif
           SafepointSynchronize::end();
+        }
+
+        // If necessary, trigger full gc.
+        if (should_gc()) {
+          VM_G1CollectFull op(Universe::heap()->total_collections(), Universe::heap()->total_full_collections(), GCCause::_java_lang_system_gc);
+          execute(&op);
         }
         _cur_vm_operation = _vm_queue->remove_next();
 

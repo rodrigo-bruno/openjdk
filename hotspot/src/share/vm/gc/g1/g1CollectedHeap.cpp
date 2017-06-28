@@ -1435,7 +1435,10 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
   const double maximum_free_percentage = (double) MaxHeapFreeRatio / 100.0;
   const double minimum_used_percentage = 1.0 - maximum_free_percentage;
 
-  const size_t min_heap_size = collector_policy()->min_heap_byte_size();
+  // If enabled, this flag will force the min heap size to be the reduced to
+  // the current heap utilization.
+  const size_t min_heap_size = AggressiveShrinking ?
+      used_after_gc : collector_policy()->min_heap_byte_size();
   const size_t max_heap_size = collector_policy()->max_heap_byte_size();
 
   // We have to be careful here as these two calculations can overflow

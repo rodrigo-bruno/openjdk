@@ -2919,9 +2919,14 @@ os::Linux::numa_set_bind_policy_func_t os::Linux::_numa_set_bind_policy;
 unsigned long* os::Linux::_numa_all_nodes;
 
 bool os::pd_uncommit_memory(char* addr, size_t size) {
-  uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
+  // If enabled, this flag forces the memory to be unmapped.
+  if (!ReleaseShrinkedMemory) {
+    uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
                                      MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
-  return res  != (uintptr_t) MAP_FAILED;
+    return res  != (uintptr_t) MAP_FAILED;
+  } else {
+    return ::munmap(addr, size) == 0;
+  }
 }
 
 static address get_stack_commited_bottom(address bottom, size_t size) {
