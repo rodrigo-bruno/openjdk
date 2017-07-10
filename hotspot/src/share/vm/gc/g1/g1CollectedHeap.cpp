@@ -1438,8 +1438,9 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
   // TODO - change value in collector_policy.
   const size_t min_heap_size = AggressiveShrinking ?
       used_after_gc : collector_policy()->min_heap_byte_size();
-  // TODO - check how I can reduce the max heap size.
-  const size_t max_heap_size = collector_policy()->max_heap_byte_size();
+  // TODO - change value in collector_policy.
+  const size_t max_heap_size = CurrentMaxHeapSize > 0 ?
+      CurrentMaxHeapSize : collector_policy()->max_heap_byte_size();
 
   // We have to be careful here as these two calculations can overflow
   // 32-bit size_t's.
@@ -2484,7 +2485,7 @@ size_t G1CollectedHeap::unsafe_max_tlab_alloc(Thread* ignored) const {
 }
 
 size_t G1CollectedHeap::max_capacity() const {
-  return _hrm.reserved().byte_size();
+  return CurrentMaxHeapSize > 0 ? CurrentMaxHeapSize : _hrm.reserved().byte_size();
 }
 
 jlong G1CollectedHeap::millis_since_last_gc() {
