@@ -71,6 +71,7 @@ Flag::Error GCPauseIntervalMillisConstraintFunc(uintx value, bool verbose);
 Flag::Error InitialBootClassLoaderMetaspaceSizeConstraintFunc(size_t value, bool verbose);
 Flag::Error InitialHeapSizeConstraintFunc(size_t value, bool verbose);
 Flag::Error MaxHeapSizeConstraintFunc(size_t value, bool verbose);
+Flag::Error CurrentMaxHeapSizeConstraintFunc(size_t value, bool verbose);
 Flag::Error HeapBaseMinAddressConstraintFunc(size_t value, bool verbose);
 Flag::Error NewSizeConstraintFunc(size_t value, bool verbose);
 Flag::Error MinTLABSizeConstraintFunc(size_t value, bool verbose);

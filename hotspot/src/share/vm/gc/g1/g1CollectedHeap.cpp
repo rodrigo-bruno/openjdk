@@ -417,7 +417,7 @@ HeapWord* G1CollectedHeap::humongous_obj_allocate(size_t word_size, AllocationCo
     }
   }
 
-  if (first == G1_NO_HRM_INDEX) {
+  if (first == G1_NO_HRM_INDEX && (capacity() + word_size < max_capacity())) {
     // Policy: We could not find enough regions for the humongous object in the
     // free list. Look through the heap to find a mix of free and uncommitted regions.
     // If so, try expansion.
@@ -1635,6 +1635,10 @@ bool G1CollectedHeap::expand(size_t expand_bytes, WorkGang* pretouch_workers, do
   if (is_maximal_no_gc()) {
     log_debug(gc, ergo, heap)("Did not expand the heap (heap already fully expanded)");
     return false;
+  } else if (CurrentMaxHeapSize > 0 && aligned_expand_bytes + capacity() > CurrentMaxHeapSize) {
+    log_debug(gc, ergo, heap)("Did not expand the heap (new heap size above current max heap size)");
+    return false;
+
   }
 
   double expand_heap_start_time_sec = os::elapsedTime();
@@ -2485,7 +2489,15 @@ size_t G1CollectedHeap::unsafe_max_tlab_alloc(Thread* ignored) const {
 }
 
 size_t G1CollectedHeap::max_capacity() const {
-  return CurrentMaxHeapSize > 0 ? CurrentMaxHeapSize : _hrm.reserved().byte_size();
+  return _hrm.reserved().byte_size();
+}
+
+size_t G1CollectedHeap::max_current_capacity() const {
+  if (CurrentMaxHeapSize > 0) {
+    return CurrentMaxHeapSize;
+  } else {
+    return max_capacity();
+  }
 }
 
 jlong G1CollectedHeap::millis_since_last_gc() {

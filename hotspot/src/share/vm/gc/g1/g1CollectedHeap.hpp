@@ -1306,6 +1306,8 @@ public:
   // Print the maximum heap capacity.
   virtual size_t max_capacity() const;
 
+  virtual size_t max_current_capacity() const;
+
   virtual jlong millis_since_last_gc();
 
 
