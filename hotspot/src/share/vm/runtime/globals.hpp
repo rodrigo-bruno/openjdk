@@ -3202,6 +3202,11 @@ public:
   manageable(uintx, MaxUsedMem, 0,                                          \
           "Max used memory that does not trigger a periodic GC.")           \
                                                                             \
+  manageable(size_t, CurrentMaxHeapSize, 0,                                 \
+          "Current MaxHeapSize. This value is used when expanding the"      \
+          "heap, i.e., it limits how much the heap can expand.")            \
+          constraint(CurrentMaxHeapSizeConstraintFunc,AfterErgo)            \
+                                                                            \
   product(bool, ReleaseShrinkedMemory, false,                               \
           "Force shinked memory to be released (and not just incommited).") \
                                                                             \

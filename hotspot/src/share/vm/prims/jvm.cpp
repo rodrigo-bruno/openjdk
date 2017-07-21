@@ -481,7 +481,7 @@ JVM_END
 
 JVM_ENTRY_NO_ENV(jlong, JVM_MaxMemory(void))
   JVMWrapper("JVM_MaxMemory");
-  size_t n = Universe::heap()->max_capacity();
+  size_t n = Universe::heap()->max_current_capacity();
   return convert_size_t_to_jlong(n);
 JVM_END
 

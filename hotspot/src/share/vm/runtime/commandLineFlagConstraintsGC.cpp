@@ -660,6 +660,15 @@ Flag::Error MaxHeapSizeConstraintFunc(size_t value, bool verbose) {
   return status;
 }
 
+Flag::Error CurrentMaxHeapSizeConstraintFunc(size_t value, bool verbose) {
+  if (value <= MaxHeapSize) {
+    return Flag::SUCCESS;
+  }
+  else {
+    return Flag::VIOLATES_CONSTRAINT;
+  }
+}
+
 Flag::Error HeapBaseMinAddressConstraintFunc(size_t value, bool verbose) {
   // If an overflow happened in Arguments::set_heap_size(), MaxHeapSize will have too large a value.
   // Check for this by ensuring that MaxHeapSize plus the requested min base address still fit within max_uintx.
