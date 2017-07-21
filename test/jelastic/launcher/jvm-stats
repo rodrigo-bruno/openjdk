@@ -1,0 +1,12 @@
+#!/bin/bash
+
+name=$1
+pid=`jps | grep "$name" | awk '{print $1}'`
+ou=`jstat -gc  $pid 2> /dev/null | grep -v "S1C" | awk '{print $8}'`
+omc=`jstat -gccapacity  $pid 2> /dev/null | grep -v "S1C" | awk '{print $8}'`
+occ=`jstat -gccapacity  $pid 2> /dev/null | grep -v "S1C" | awk '{print $9}'`
+
+echo "PID=$pid"
+echo "Old Max Capacity=$omc"
+echo "Old Current Capacity=$occ"
+echo "Old Utilization=$ou"

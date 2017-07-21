@@ -1,0 +1,3 @@
+sleep 5
+alloc buffer 2048 2048000
+mem-info

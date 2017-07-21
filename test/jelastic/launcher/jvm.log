@@ -1,0 +1,49 @@
+[0.014s][info] Heap region size: 2M
+[0.014s][debug] Minimum heap 1073741824  Initial heap 1073741824  Maximum heap 8589934592
+[0.015s][debug] Initial Refinement Zones: green: 10, yellow: 30, red: 50, min yellow size: 20
+[0.017s][debug] Initialize Card Live Data
+[0.017s][debug] Initialize Card Live Data 0.030ms
+[0.017s][debug] ConcGCThreads: 3
+[0.017s][debug] ParallelGCThreads: 10
+[0.017s][debug] Initialize mark stack with 4096 chunks, maximum 16384
+[0.017s][debug] Expand the heap. requested expansion amount:1073741824B expansion amount:1073741824B
+[0.023s][debug] Target occupancy update: old: 0B, new: 1073741824B
+[0.023s][info ] Using G1
+[0.023s][info ] Heap address: 0x00000005c0000000, size: 8192 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+[0.027s][debug] VirtualSpaceNode::take_from_committed() not available 524288 words 
+[0.027s][debug]    space @ 0x00007faa5c350f10 0K,   0% used [0x00007fa9d56ff000, 0x00007fa9d56ff000, 0x00007fa9d56ff000, 0x00007fa9d5eff000)
+[0.027s][debug] VirtualSpaceNode::take_from_committed() not available 49152 words 
+[0.027s][debug]    space @ 0x00007faa5c350d60 0K,   0% used [0x00000007c0000000, 0x00000007c0000000, 0x00000007c0000000, 0x0000000800000000)
+[0.215s][debug] VirtualSpaceNode::take_from_committed() not available 128 words 
+[0.215s][debug]    space @ 0x00007faa5c350f10 512K, 100% used [0x00007fa9d56ff000, 0x00007fa9d5aff000, 0x00007fa9d5aff000, 0x00007fa9d5eff000)
+[0.215s][debug] VirtualSpaceNode::take_from_committed() not available 128 words 
+[0.215s][debug]    space @ 0x00007faa5c350d60 48K, 100% used [0x00000007c0000000, 0x00000007c0060000, 0x00000007c0060000, 0x0000000800000000)
+[0.312s][debug] VirtualSpaceNode::take_from_committed() not available 8192 words 
+[0.312s][debug]    space @ 0x00007faa5c350f10 544K,  99% used [0x00007fa9d56ff000, 0x00007fa9d5b3ac00, 0x00007fa9d5b3f000, 0x00007fa9d5eff000)
+[0.374s][debug] VirtualSpaceNode::take_from_committed() not available 8192 words 
+[0.374s][debug]    space @ 0x00007faa5c350f10 576K,  98% used [0x00007fa9d56ff000, 0x00007fa9d5b6f800, 0x00007fa9d5b7f000, 0x00007fa9d5eff000)
+[0.393s][debug] VirtualSpaceNode::take_from_committed() not available 8192 words 
+[0.393s][debug]    space @ 0x00007faa5c350f10 608K,  98% used [0x00007fa9d56ff000, 0x00007fa9d5bb2400, 0x00007fa9d5bbf000, 0x00007fa9d5eff000)
+[0.413s][debug] VirtualSpaceNode::take_from_committed() not available 4096 words 
+[0.413s][debug]    space @ 0x00007faa5c350d60 64K,  96% used [0x00000007c0000000, 0x00000007c007b400, 0x00000007c0080000, 0x0000000800000000)
+[0.422s][debug] VirtualSpaceNode::take_from_committed() not available 8192 words 
+[0.422s][debug]    space @ 0x00007faa5c350f10 640K,  99% used [0x00007fa9d56ff000, 0x00007fa9d5bf6c00, 0x00007fa9d5bff000, 0x00007fa9d5eff000)
+[0.447s][debug] VirtualSpaceNode::take_from_committed() not available 8192 words 
+[0.447s][debug]    space @ 0x00007faa5c350f10 672K,  99% used [0x00007fa9d56ff000, 0x00007fa9d5c3b400, 0x00007fa9d5c3f000, 0x00007fa9d5eff000)
+[0.463s][debug] VirtualSpaceNode::take_from_committed() not available 8192 words 
+[0.463s][debug]    space @ 0x00007faa5c350f10 704K,  99% used [0x00007fa9d56ff000, 0x00007fa9d5c7d800, 0x00007fa9d5c7f000, 0x00007fa9d5eff000)
+[0.479s][debug] Stopping 0
+[0.480s][debug] Stopping 1
+[0.480s][debug] Stopping 2
+[0.480s][debug] Stopping 3
+[0.480s][debug] Stopping 4
+[0.480s][debug] Stopping 5
+[0.480s][debug] Stopping 6
+[0.480s][debug] Stopping 7
+[0.480s][debug] Stopping 8
+[0.480s][debug] Stopping 9
+[0.480s][info ] Heap
+[0.480s][info ]  garbage-first heap   total 1048576K, used 4096K [0x00000005c0000000, 0x00000005c0201000, 0x00000007c0000000)
+[0.480s][info ]   region size 2048K, 3 young (6144K), 0 survivors (0K)
+[0.480s][info ]  Metaspace       used 6334K, capacity 6430K, committed 6528K, reserved 1056768K
+[0.480s][info ]   class space    used 571K, capacity 603K, committed 640K, reserved 1048576K

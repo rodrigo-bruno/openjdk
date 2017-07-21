@@ -1,0 +1,6 @@
+#!/bin/bash
+
+mdir=`dirname $0`
+source $mdir/java-include
+
+$JAVAC_EXE $*

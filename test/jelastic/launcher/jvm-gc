@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name=$1
+pid=`jps | grep "$name" | awk '{print $1}'`
+echo "PID=$pid"
+jcmd $pid GC.run
