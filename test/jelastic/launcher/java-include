@@ -7,7 +7,28 @@ JAVAC_EXE="$JAVA_HOME/bin/javac"
 JVM_OPTS="$JVM_OPTS -Xlog:gc*=debug:file=jvm.log:uptime,level:filecount=1"
 
 JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
-JVM_OPTS="$JVM_OPTS -Xms6g"
-JVM_OPTS="$JVM_OPTS -Xmx6g"
+JVM_OPTS="$JVM_OPTS -Xms1g"
+JVM_OPTS="$JVM_OPTS -Xmx8g"
 JVM_OPTS="$JVM_OPTS -XX:NewSize=256m"
 JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=256m"
+
+# Jelastic flags
+# Sets that every 10 seconds, a full gc should occur.
+JVM_OPTS="$JVM_OPTS -XX:GCFrequency=60"
+#JVM_OPTS="$JVM_OPTS -XX:MaxLoadGC=5"
+# TODO - change name to ReleaseUncommitedMemory?
+#JVM_OPTS="$JVM_OPTS -XX:+ReleaseShrinkedMemory"
+JVM_OPTS="$JVM_OPTS -XX:+AggressiveShrinking"
+JVM_OPTS="$JVM_OPTS -XX:CurrentMaxHeapSize=6g"
+#JVM_OPTS="$JVM_OPTS -XX:MaxUsedMem=10"
+#JVM_OPTS="$JVM_OPTS -XX:MaxUnsedMem=10"
+
+# Other useful flags
+# If disabled, forces the heap to skhrink sonner and more aggressively.
+JVM_OPTS="$JVM_OPTS -XX:-ShrinkHeapInSteps"
+# Max heap free percentage to avoid shrinking the heap
+JVM_OPTS="$JVM_OPTS -XX:MaxHeapFreeRatio=25"
+# Min heap free percentage to avoid expanding the heap
+JVM_OPTS="$JVM_OPTS -XX:MinHeapFreeRatio=5"
+
+

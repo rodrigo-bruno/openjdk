@@ -1,10 +1,18 @@
-sleep 5
-alloc buffer 512 1024000
-sleep 5
-gc
-sleep 5
+sleep 2
+alloc buffer 2048 2048000
+mem-info
+alloc buffer12 2048 2048000
+mem-info
+sleep 2
 delete buffer
-sleep 5
+sleep 2
 gc
-sleep 5
+sleep 10
+alloc buffer2 1024 2048000
+sleep 2
+delete buffer2
+sleep 2
+gc
+sleep 10
+
 

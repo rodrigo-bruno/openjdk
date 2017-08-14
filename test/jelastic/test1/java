@@ -1,0 +1,6 @@
+#!/bin/bash
+
+mdir=`dirname $0`
+source $mdir/java-include
+
+$JAVA_EXE $JVM_OPTS $*

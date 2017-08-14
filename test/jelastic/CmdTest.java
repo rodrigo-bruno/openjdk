@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.*;
+import java.lang.management.ManagementFactory;
+
 
 class CmdTest {
 
@@ -76,7 +78,20 @@ class CmdTest {
       case "gc":
         System.gc();
         break;
-
+      case "mem-info":
+        System.out.println("Free memory (MBs): " + 
+            Runtime.getRuntime().freeMemory() / 1000000);
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        System.out.println("Maximum memory (MBs): " + 
+            (maxMemory == Long.MAX_VALUE ? "no limit" : maxMemory / 1000000));
+        System.out.println("Total memory (MBs): " + 
+            Runtime.getRuntime().totalMemory() /1000000);
+            java.lang.management.MemoryUsage mu = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+            System.out.println("Init (MB) = " + mu.getInit() / 1000000);
+            System.out.println("Used (MB) = " + mu.getUsed() / 1000000);
+            System.out.println("Committed (MB) = " + mu.getCommitted() / 1000000);
+            System.out.println("Max (MB) = " + mu.getMax() / 1000000);
+        break;
       default:
         System.out.println("unknown command");
       } 

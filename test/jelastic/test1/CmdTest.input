@@ -1,0 +1,15 @@
+sleep 20
+alloc buffer 1024 2048000
+sleep 2
+delete buffer
+sleep 2
+gc
+sleep 10
+alloc buffer2 1024 2048000
+sleep 2
+delete buffer2
+sleep 2
+gc
+sleep 10
+
+
