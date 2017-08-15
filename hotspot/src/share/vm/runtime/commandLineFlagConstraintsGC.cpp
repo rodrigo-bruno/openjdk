@@ -661,12 +661,22 @@ Flag::Error MaxHeapSizeConstraintFunc(size_t value, bool verbose) {
 }
 
 Flag::Error CurrentMaxHeapSizeConstraintFunc(size_t value, bool verbose) {
-  if (value <= MaxHeapSize) {
+  if (Universe::heap() == NULL) {
+    return MaxHeapSize >= value ? Flag::SUCCESS : Flag::VIOLATES_CONSTRAINT;
+  }
+  else if ((value > Universe::heap()->capacity()) && (value <= MaxHeapSize)) {
     return Flag::SUCCESS;
   }
-  else {
-    return Flag::VIOLATES_CONSTRAINT;
+  else if (value <= Universe::heap()->capacity()) {
+    Universe::heap()->collect(GCCause::_java_lang_system_gc);
+    if (value > Universe::heap()->capacity()) {
+      return Flag::SUCCESS;
+    }
   }
+  CommandLineError::print(verbose,
+                          "Could not set CurrentMaxHeapSize. New CurrentMaxHeapSize (" UINTX_FORMAT "), MaxHeapSize (" UINTX_FORMAT ")\n",
+                          value, MaxHeapSize);
+  return Flag::VIOLATES_CONSTRAINT;
 }
 
 Flag::Error HeapBaseMinAddressConstraintFunc(size_t value, bool verbose) {
