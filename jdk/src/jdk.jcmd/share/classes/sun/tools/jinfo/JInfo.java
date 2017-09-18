@@ -139,6 +139,28 @@ final public class JInfo {
         if (index != -1) {
             flag = option.substring(0, index);
             String value = option.substring(index + 1);
+            if (value.substring(0, value.length() - 1).matches("-?\\d+")) {
+              char c = value.charAt(value.length() - 1);
+              long mul = 0;
+              switch (c) {
+                  case 'k':
+                  case 'K':
+                      mul = 1024;
+                      break;
+                  case 'm':
+                  case 'M':
+                      mul =1024*1024;
+                      break;
+                  case 'g':
+                  case 'G':
+                      mul = 1024*1024*1024;
+                      break;
+                }
+                if (mul > 0) {
+                    value = value.substring(0, value.length() -1);
+                    value = Long.toUnsignedString(Long.parseLong(value)*mul);
+                }
+            }
             in = vm.setFlag(flag, value);
         } else {
             char c = option.charAt(0);
